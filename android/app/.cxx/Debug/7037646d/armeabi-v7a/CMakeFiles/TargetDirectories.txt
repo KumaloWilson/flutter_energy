@@ -1,0 +1,2 @@
+/home/watkay/StudioProjects/rimai/android/app/.cxx/Debug/7037646d/armeabi-v7a/CMakeFiles/edit_cache.dir
+/home/watkay/StudioProjects/rimai/android/app/.cxx/Debug/7037646d/armeabi-v7a/CMakeFiles/rebuild_cache.dir
