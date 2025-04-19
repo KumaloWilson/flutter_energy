@@ -30,6 +30,14 @@ class DashboardView extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (controller.hasError.value) {
+          return _buildErrorView(context, controller);
+        }
+
+        if (controller.readings.isEmpty) {
+          return _buildEmptyView(context, controller);
+        }
+
         return RefreshIndicator(
           onRefresh: controller.fetchLastReadings,
           child: CustomScrollView(
@@ -64,7 +72,7 @@ class DashboardView extends StatelessWidget {
               ),
               SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+                      (context, index) {
                     final reading = controller.readings[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(
@@ -87,5 +95,70 @@ class DashboardView extends StatelessWidget {
       }),
     );
   }
-}
 
+  Widget _buildErrorView(BuildContext context, DashboardController controller) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            size: 80,
+            color: Colors.red,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Failed to load data',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Text(
+              controller.errorMessage.value,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: controller.retryFetch,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyView(BuildContext context, DashboardController controller) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.device_unknown,
+            size: 80,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No appliances found',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'No energy readings available at the moment',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: controller.retryFetch,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Refresh'),
+          ),
+        ],
+      ),
+    );
+  }
+}

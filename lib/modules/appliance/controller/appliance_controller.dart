@@ -21,7 +21,7 @@ class ApplianceController extends GetxController {
     voltage: '',
     current: '',
     timeOn: '',
-    activeEnergy: '',
+    activeEnergy: '', readingTimeStamp: DateTime.now(),
   ).obs;
 
   final RxList<TimelineEntry> timelineData = <TimelineEntry>[].obs;

@@ -1,0 +1,2 @@
+/home/watkay/StudioProjects/rimai/android/app/.cxx/RelWithDebInfo/216q5t64/x86/CMakeFiles/edit_cache.dir
+/home/watkay/StudioProjects/rimai/android/app/.cxx/RelWithDebInfo/216q5t64/x86/CMakeFiles/rebuild_cache.dir

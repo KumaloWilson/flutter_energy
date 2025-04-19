@@ -1,0 +1,1 @@
+/home/watkay/StudioProjects/rimai/build/app/intermediates/cxx/RelWithDebInfo/216q5t64/obj/x86

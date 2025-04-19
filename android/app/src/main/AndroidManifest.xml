@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
-        android:label="Rimai"
+        android:label="Energy"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

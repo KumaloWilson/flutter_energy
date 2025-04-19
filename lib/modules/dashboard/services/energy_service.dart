@@ -1,70 +1,50 @@
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
+import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
 
 class EnergyService {
+  final ApiService _apiService = ApiService();
+
   Future<List<ApplianceReading>> getApplianceReadings() async {
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      ApplianceReading(
-        id: 1,
-        applianceInfo: ApplianceInfo(
-          id: 1,
-          appliance: "Television",
-          ratedPower: "100 W",
-          dateAdded: DateTime.parse("2025-02-23T19:38:27.999469Z"),
-        ),
-        voltage: "220",
-        current: "8",
-        timeOn: "15",
-        activeEnergy: "440",
-      ),
-      ApplianceReading(
-        id: 2,
-        applianceInfo: ApplianceInfo(
-          id: 2,
-          appliance: "Refrigerator",
-          ratedPower: "200 W",
-          dateAdded: DateTime.parse("2025-02-23T19:38:48.041163Z"),
-        ),
-        voltage: "220",
-        current: "12",
-        timeOn: "15",
-        activeEnergy: "660",
-      ),
-    ];
+    try {
+      // Get all registered devices
+      final devices = await _apiService.getRegisteredDevices();
+
+      // Create a list to store all readings
+      List<ApplianceReading> allReadings = [];
+
+      // For each device, get its readings
+      for (var device in devices) {
+        final readings = await _apiService.getDeviceReadings(device.id);
+        if (readings.isNotEmpty) {
+          allReadings.addAll(readings);
+        }
+      }
+
+      return allReadings;
+    } catch (e) {
+      throw Exception('Failed to get appliance readings: $e');
+    }
   }
 
   Future<List<ApplianceReading>> getLastReadings() async {
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      ApplianceReading(
-        id: 8,
-        applianceInfo: ApplianceInfo(
-          id: 1,
-          appliance: "Television",
-          ratedPower: "100 W",
-          dateAdded: DateTime.parse("2025-02-23T19:38:27.999469Z"),
-        ),
-        voltage: "220",
-        current: "8",
-        timeOn: "60",
-        activeEnergy: "1760",
-      ),
-      ApplianceReading(
-        id: 9,
-        applianceInfo: ApplianceInfo(
-          id: 2,
-          appliance: "Refrigerator",
-          ratedPower: "200 W",
-          dateAdded: DateTime.parse("2025-02-23T19:38:48.041163Z"),
-        ),
-        voltage: "220",
-        current: "12",
-        timeOn: "55",
-        activeEnergy: "2428",
-      ),
-    ];
+    try {
+      // Get all registered devices
+      final devices = await _apiService.getRegisteredDevices();
+
+      // Create a list to store the last reading of each device
+      List<ApplianceReading> lastReadings = [];
+
+      // For each device, get its last reading
+      for (var device in devices) {
+        final lastReading = await _apiService.getLastReadingForDevice(device.id);
+        if (lastReading != null) {
+          lastReadings.add(lastReading);
+        }
+      }
+
+      return lastReadings;
+    } catch (e) {
+      throw Exception('Failed to get last readings: $e');
+    }
   }
 }
-

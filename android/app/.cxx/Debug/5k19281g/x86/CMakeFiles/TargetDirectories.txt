@@ -1,0 +1,2 @@
+/home/watkay/StudioProjects/energy_management/android/app/.cxx/Debug/5k19281g/x86/CMakeFiles/edit_cache.dir
+/home/watkay/StudioProjects/energy_management/android/app/.cxx/Debug/5k19281g/x86/CMakeFiles/rebuild_cache.dir

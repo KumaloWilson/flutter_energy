@@ -1,0 +1,1 @@
+/home/watkay/StudioProjects/energy_management/build/app/intermediates/cxx/Debug/5k19281g/obj/x86
