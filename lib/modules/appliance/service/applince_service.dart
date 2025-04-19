@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
-import '../models/appliance_reading.dart';
+import '../../dashboard/models/appliance_reading.dart';
+
 
 class ApplianceService {
   final Dio _dio = Dio(BaseOptions(

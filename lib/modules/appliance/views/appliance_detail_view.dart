@@ -1,12 +1,11 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-
 import '../controller/appliance_controller.dart';
+import '../service/applince_service.dart';
 
 class ApplianceDetailView extends StatelessWidget {
   const ApplianceDetailView({super.key});
@@ -28,7 +27,7 @@ class ApplianceDetailView extends StatelessWidget {
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                controller.appliance.value.applianceInfo.device,
+                controller.appliance.value.applianceInfo.appliance,
                 style: TextStyle(
                   color: colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
@@ -61,7 +60,7 @@ class ApplianceDetailView extends StatelessWidget {
                         tag: 'appliance-${controller.appliance.value.id}',
                         child: Icon(
                           _getApplianceIcon(
-                            controller.appliance.value.applianceInfo.device,
+                            controller.appliance.value.applianceInfo.appliance,
                           ),
                           size: 80,
                           color: colorScheme.onPrimary,
@@ -444,7 +443,9 @@ class ApplianceDetailView extends StatelessWidget {
                     ],
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
-                        tooltipBgColor: Theme.of(context).colorScheme.surface,
+                        tooltipBorder: BorderSide(
+                          color: Theme.of(context).colorScheme.surface,
+                        ),
                         tooltipRoundedRadius: 8,
                         getTooltipItems: (touchedSpots) {
                           return touchedSpots.map((touchedSpot) {

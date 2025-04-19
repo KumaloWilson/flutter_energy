@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-
-import '../controller/appliance_controller.dart';
+import '../../modules/appliance/controller/appliance_controller.dart';
 
 class UsageTimeline extends StatelessWidget {
   const UsageTimeline({super.key});

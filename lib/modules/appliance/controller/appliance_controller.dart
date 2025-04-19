@@ -3,8 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../models/appliance_reading.dart';
-import '../service/appliance_service.dart';
+import '../../dashboard/models/appliance_reading.dart';
+import '../service/applince_service.dart';
+
 
 class ApplianceController extends GetxController {
   final ApplianceService _applianceService = ApplianceService();
@@ -15,9 +16,9 @@ class ApplianceController extends GetxController {
     id: 0,
     applianceInfo: ApplianceInfo(
       id: 0,
-      device: '',
       ratedPower: '',
       dateAdded: DateTime.now(),
+      appliance: '',
     ),
     voltage: '',
     current: '',
