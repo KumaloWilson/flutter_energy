@@ -1,10 +1,8 @@
 import 'package:get/get.dart';
 import 'package:flutter_energy/modules/auth/views/login_view.dart';
 import 'package:flutter_energy/modules/auth/views/signup_view.dart';
-import 'package:flutter_energy/modules/dashboard/views/home_view.dart';
 import 'package:flutter_energy/modules/appliance/views/appliance_detail_view.dart';
 import 'package:flutter_energy/modules/analytics/views/analytics_view.dart';
-
 import '../modules/alerts/view/alerts_view.dart';
 import '../modules/automation/views/schedule_views.dart';
 import '../modules/main/views/main_view.dart';
@@ -28,10 +26,6 @@ class AppPages {
       name: Routes.HOME,
       page: () => const MainView(),
       children: [
-        GetPage(
-          name: Routes.DASHBOARD,
-          page: () => const HomeView(),
-        ),
         GetPage(
           name: Routes.ANALYTICS,
           page: () => const AnalyticsView(),

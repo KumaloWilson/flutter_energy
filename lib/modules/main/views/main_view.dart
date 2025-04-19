@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_energy/modules/dashboard/views/dashboard_view.dart';
 import 'package:get/get.dart';
-
 import '../../../routes/app_pages.dart';
 import '../../analytics/views/analytics_view.dart';
 import '../../automation/views/schedule_views.dart';
-import '../../dashboard/views/home_view.dart';
 import '../../settings/views/settings_view.dart';
 import '../controller/main_controller.dart';
 
