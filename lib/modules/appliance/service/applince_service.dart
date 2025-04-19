@@ -1,70 +1,110 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+
+import '../models/appliance_reading.dart';
 
 class ApplianceService {
-  Future<ApplianceDetails> getApplianceDetails(int id) async {
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
+  final Dio _dio = Dio(BaseOptions(
+    baseUrl: 'https://sereneinv.co.zw/minimeter/',
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  ));
 
-    // Generate mock timeline data
-    final timeline = List.generate(
-      10,
-          (index) => TimelineEntry(
-        timestamp: DateTime.now().subtract(Duration(hours: index)),
-        event: _getRandomEvent(),
-        value: (Random().nextDouble() * 100).toStringAsFixed(1),
-      ),
-    );
+  Future<List<ApplianceReading>> getDeviceReadings(int deviceId) async {
+    try {
+      final response = await _dio.get('all-records-per-device/$deviceId');
 
-    // Generate mock power readings (24 hours)
-    final powerReadings = List.generate(
-      24,
-          (index) => PowerReading(
-        timestamp: DateTime.now().subtract(Duration(hours: 23 - index)),
-        power: 100 + (Random().nextDouble() * 150),
-      ),
-    );
-
-    return ApplianceDetails(
-      timeline: timeline,
-      powerReadings: powerReadings,
-    );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => ApplianceReading.fromApiJson(json)).toList();
+      } else {
+        throw Exception('Failed to load readings: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to fetch device readings');
+    } catch (e) {
+      throw Exception('Unexpected error while fetching readings: $e');
+    }
   }
 
-  String _getRandomEvent() {
-    final events = [
-      'Power on',
-      'Power off',
-      'Peak usage',
-      'Low usage',
-      'Standby mode',
-      'Power saving activated',
-      'Schedule started',
-      'Schedule ended',
-    ];
-    return events[Random().nextInt(events.length)];
+  Future<List<Map<String, dynamic>>> getTotalConsumption(
+      List<int> deviceIds,
+      String startDate,
+      String endDate
+      ) async {
+    try {
+      final deviceIdsParam = deviceIds.join(',');
+      final uri = 'total-consumption-summary/?device_ids=$deviceIdsParam&start_date=$startDate&end_date=$endDate';
+
+      final response = await _dio.get(uri);
+
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to load consumption: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to fetch consumption data');
+    } catch (e) {
+      throw Exception('Unexpected error while fetching consumption: $e');
+    }
   }
 
   Future<void> updateSchedule(int id, Schedule schedule) async {
-    // Simulate API call
+    // API implementation would go here
+    // Since this endpoint isn't provided, we'll simulate it
     await Future.delayed(const Duration(seconds: 1));
   }
 
   Future<void> togglePowerSaving(int id, bool enabled) async {
-    // Simulate API call
+    // API implementation would go here
+    // Since this endpoint isn't provided, we'll simulate it
     await Future.delayed(const Duration(seconds: 1));
+  }
+
+  // Handle Dio errors with more specific messages
+  Exception _handleError(DioException e, String fallbackMessage) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return Exception('Connection timed out. Please check your internet connection.');
+      case DioExceptionType.badResponse:
+        return Exception('Server error: ${e.response?.statusCode} - ${e.response?.statusMessage}');
+      case DioExceptionType.connectionError:
+        return Exception('Connection error. Please check your internet connection.');
+      default:
+        return Exception('$fallbackMessage: ${e.message}');
+    }
   }
 }
 
-class ApplianceDetails {
-  final List<TimelineEntry> timeline;
-  final List<PowerReading> powerReadings;
+class Schedule {
+  final TimeOfDay startTime;
+  final TimeOfDay endTime;
+  final List<int> activeDays;
+  final bool enabled;
 
-  ApplianceDetails({
-    required this.timeline,
-    required this.powerReadings,
+  const Schedule({
+    required this.startTime,
+    required this.endTime,
+    required this.activeDays,
+    required this.enabled,
   });
+
+  Schedule copyWith({
+    TimeOfDay? startTime,
+    TimeOfDay? endTime,
+    List<int>? activeDays,
+    bool? enabled,
+  }) {
+    return Schedule(
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      activeDays: activeDays ?? this.activeDays,
+      enabled: enabled ?? this.enabled,
+    );
+  }
 }
 
 class TimelineEntry {
@@ -88,18 +128,3 @@ class PowerReading {
     required this.power,
   });
 }
-
-class Schedule {
-  final TimeOfDay startTime;
-  final TimeOfDay endTime;
-  final List<int> activeDays;
-  final bool enabled;
-
-  Schedule({
-    required this.startTime,
-    required this.endTime,
-    required this.activeDays,
-    required this.enabled,
-  });
-}
-
