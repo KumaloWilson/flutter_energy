@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 class AnalyticsService {
   // Updated base URL from your provided endpoint
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'https://test.kingsmansoftwares.co.zw/api',
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
+    baseUrl: 'http://192.168.0.178:5000/api',
+    connectTimeout: const Duration(seconds: 60),
+    receiveTimeout: const Duration(seconds: 60),
   ));
 
 
