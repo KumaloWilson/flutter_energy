@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_energy/core/core/utilities/logs.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_energy/modules/analytics/models/energy_stats.dart';
@@ -68,6 +69,7 @@ class AnalyticsController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();
+      DevLogs.logError('Failed to fetch statistics: ${e.toString()}');
       Get.snackbar(
         'Error',
         'Failed to fetch statistics: ${e.toString()}',
@@ -96,6 +98,7 @@ class AnalyticsController extends GetxController {
       }
     } catch (e) {
       hasError.value = true;
+      DevLogs.logError('Failed to fetch devices: ${e.toString()}');
       errorMessage.value = e.toString();
       Get.snackbar(
         'Error',
@@ -138,6 +141,7 @@ class AnalyticsController extends GetxController {
         hourlyEnergyData.value = hourlyData;
       }
     } catch (e) {
+      DevLogs.logError('Failed to fetch dashboard overview: ${e.toString()}');
       Get.snackbar(
         'Error',
         'Failed to fetch dashboard overview: ${e.toString()}',
@@ -179,6 +183,7 @@ class AnalyticsController extends GetxController {
         }
       }
     } catch (e) {
+      DevLogs.logError('Failed to fetch peak demand summary: ${e.toString()}');
       Get.snackbar(
         'Error',
         'Failed to fetch peak demand summary: ${e.toString()}',
@@ -214,6 +219,7 @@ class AnalyticsController extends GetxController {
       devicePredictions.sort((a, b) => a.hour!.compareTo(b.hour!));
       hourlyEnergyData.value = devicePredictions;
     } catch (e) {
+      DevLogs.logError('Failed to fetch device predictions: ${e.toString()}');
       Get.snackbar(
         'Error',
         'Failed to fetch device predictions: ${e.toString()}',
