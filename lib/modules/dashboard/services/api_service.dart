@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 class ApiService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://sereneinv.co.zw/minimeter/',
-    connectTimeout: const Duration(seconds: 40),
-    receiveTimeout: const Duration(seconds: 40),
+    connectTimeout: const Duration(seconds: 50),
+    receiveTimeout: const Duration(seconds: 50),
   ));
 
   // Fetch all registered devices
