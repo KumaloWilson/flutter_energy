@@ -3,7 +3,6 @@ import 'package:flutter_energy/modules/dashboard/views/dashboard_view.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_pages.dart';
 import '../../analytics/views/analytics_view.dart';
-import '../../automation/views/schedule_views.dart';
 import '../../settings/views/settings_view.dart';
 import '../controller/main_controller.dart';
 
@@ -20,7 +19,6 @@ class MainView extends StatelessWidget {
         children: const [
           DashboardView(),
           AnalyticsView(),
-          SchedulesView(),
           SettingsView(),
         ],
       )),
@@ -38,11 +36,7 @@ class MainView extends StatelessWidget {
             selectedIcon: Icon(Icons.analytics),
             label: 'Analytics',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.schedule_outlined),
-            selectedIcon: Icon(Icons.schedule),
-            label: 'Schedules',
-          ),
+
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),

@@ -7,7 +7,6 @@ import '../modules/alerts/view/alerts_view.dart';
 import '../modules/analytics/views/comparison_view.dart';
 import '../modules/analytics/views/device_detail_view.dart';
 import '../modules/analytics/views/peak_demand_view.dart';
-import '../modules/automation/views/schedule_views.dart';
 import '../modules/main/views/main_view.dart';
 import '../modules/settings/views/settings_view.dart';
 import '../modules/tips/view/tips_view.dart';
@@ -33,10 +32,7 @@ class AppPages {
           name: Routes.ANALYTICS,
           page: () => const AnalyticsView(),
         ),
-        GetPage(
-          name: Routes.SCHEDULES,
-          page: () => const SchedulesView(),
-        ),
+
         GetPage(
           name: Routes.SETTINGS,
           page: () => const SettingsView(),
