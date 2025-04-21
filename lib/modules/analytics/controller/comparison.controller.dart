@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../core/core/utilities/logs.dart';
 import '../../dashboard/models/appliance_reading.dart';
 import '../../dashboard/services/api_service.dart';
 import '../services/analytics_service.dart';
-import '../../../core/utilities/logger.dart';
 
 class ComparisonController extends GetxController {
   final ApiService _apiService = ApiService();
@@ -58,7 +58,7 @@ class ComparisonController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();
-      Logger.error('Failed to fetch comparison data: $e');
+      DevLogs.logError('Failed to fetch comparison data: $e');
     } finally {
       isLoading.value = false;
     }
@@ -69,7 +69,7 @@ class ComparisonController extends GetxController {
       final deviceList = await _apiService.getRegisteredDevices();
       devices.value = deviceList;
     } catch (e) {
-      Logger.error('Failed to fetch devices: $e');
+      DevLogs.logError('Failed to fetch devices: $e');
       throw Exception('Failed to fetch devices: $e');
     }
   }
@@ -119,7 +119,7 @@ class ComparisonController extends GetxController {
 
       deviceComparisonData.value = comparisonData;
     } catch (e) {
-      Logger.error('Failed to generate device comparison data: $e');
+      DevLogs.logError('Failed to generate device comparison data: $e');
       throw Exception('Failed to generate device comparison data: $e');
     } finally {
       isLoadingDeviceComparison.value = false;
@@ -157,7 +157,7 @@ class ComparisonController extends GetxController {
         ),
       ];
     } catch (e) {
-      Logger.error('Failed to generate period comparison data: $e');
+      DevLogs.logError('Failed to generate period comparison data: $e');
       throw Exception('Failed to generate period comparison data: $e');
     } finally {
       isLoadingPeriodComparison.value = false;

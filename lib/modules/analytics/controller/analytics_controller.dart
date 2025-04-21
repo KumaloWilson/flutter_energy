@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../core/core/utilities/logs.dart';
 import '../models/energy_stats.dart';
 import '../../dashboard/models/appliance_reading.dart';
 import '../../dashboard/services/api_service.dart';
 import '../services/analytics_service.dart';
-import '../../../core/utilities/logger.dart';
 
 class AnalyticsController extends GetxController {
   final ApiService _apiService = ApiService();
@@ -80,7 +80,7 @@ class AnalyticsController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();
-      Logger.error('Failed to fetch statistics: $e');
+      DevLogs.logError('Failed to fetch statistics: $e');
       showErrorSnackbar('Failed to fetch statistics', e.toString());
     } finally {
       isLoading.value = false;
@@ -103,7 +103,7 @@ class AnalyticsController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();
-      Logger.error('Failed to fetch devices: $e');
+      DevLogs.logError('Failed to fetch devices: $e');
       showErrorSnackbar('Failed to fetch devices', e.toString());
     } finally {
       isLoadingDevices.value = false;
@@ -120,7 +120,7 @@ class AnalyticsController extends GetxController {
         updateHourlyDataFromOverview(overview);
       }
     } catch (e) {
-      Logger.error('Failed to fetch dashboard overview: $e');
+      DevLogs.logError('Failed to fetch dashboard overview: $e');
       showErrorSnackbar('Failed to fetch dashboard overview', e.toString());
     }
   }
@@ -135,7 +135,7 @@ class AnalyticsController extends GetxController {
       // Extract peak demand data for charts
       updatePeakDemandData(summary);
     } catch (e) {
-      Logger.error('Failed to fetch peak demand summary: $e');
+      DevLogs.logError('Failed to fetch peak demand summary: $e');
       showErrorSnackbar('Failed to fetch peak demand summary', e.toString());
     } finally {
       isLoadingPeakDemand.value = false;
@@ -147,7 +147,7 @@ class AnalyticsController extends GetxController {
       final consumption = await _analyticsService.getTotalConsumption();
       totalConsumption.value = consumption;
     } catch (e) {
-      Logger.error('Failed to fetch total consumption: $e');
+      DevLogs.logError('Failed to fetch total consumption: $e');
       showErrorSnackbar('Failed to fetch total consumption', e.toString());
     }
   }
@@ -161,7 +161,7 @@ class AnalyticsController extends GetxController {
 
       updateHourlyDataFromPredictions(predictions);
     } catch (e) {
-      Logger.error('Failed to fetch device predictions: $e');
+      DevLogs.logError('Failed to fetch device predictions: $e');
       showErrorSnackbar('Failed to fetch device predictions', e.toString());
     } finally {
       isLoadingPredictions.value = false;

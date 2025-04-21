@@ -11,5 +11,9 @@ abstract class Routes {
   static const APPLIANCE_DETAIL = '/appliance-detail';
   static const TIPS = '/tips';
   static const ALERTS = '/alerts';
+  static const DEVICE_ANALYTICS = '/device/:id';
+  static const DEVICE_PEAK = 'peak-demand';
+  static const COMPARISON = 'comparison';
 }
+
 

@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../core/core/utilities/logs.dart';
 import '../../dashboard/models/appliance_reading.dart';
 import '../../dashboard/services/api_service.dart';
 import '../services/analytics_service.dart';
-import '../../../core/utilities/logger.dart';
 
 class DeviceDetailsController extends GetxController {
   final int deviceId;
@@ -58,7 +57,7 @@ class DeviceDetailsController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();
-      Logger.error('Failed to fetch device details: $e');
+      DevLogs.logError('Failed to fetch device details: $e');
     } finally {
       isLoading.value = false;
     }
@@ -78,7 +77,7 @@ class DeviceDetailsController extends GetxController {
       );
       deviceInfo.value = device;
     } catch (e) {
-      Logger.error('Failed to fetch device info: $e');
+      DevLogs.logError('Failed to fetch device info: $e');
       throw Exception('Failed to fetch device info: $e');
     }
   }
@@ -171,7 +170,7 @@ class DeviceDetailsController extends GetxController {
         hourlyPatterns.value = patternsList;
       }
     } catch (e) {
-      Logger.error('Failed to fetch device summary: $e');
+      DevLogs.logError('Failed to fetch device summary: $e');
       throw Exception('Failed to fetch device summary: $e');
     } finally {
       isLoadingHourly.value = false;
@@ -189,7 +188,7 @@ class DeviceDetailsController extends GetxController {
 
       totalEnergy.value = (deviceConsumption['total_energy'] as num?)?.toDouble() ?? 0.0;
     } catch (e) {
-      Logger.error('Failed to fetch total consumption: $e');
+      DevLogs.logError('Failed to fetch total consumption: $e');
       throw Exception('Failed to fetch total consumption: $e');
     }
   }

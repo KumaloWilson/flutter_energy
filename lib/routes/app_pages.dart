@@ -4,6 +4,9 @@ import 'package:flutter_energy/modules/auth/views/signup_view.dart';
 import 'package:flutter_energy/modules/appliance/views/appliance_detail_view.dart';
 import 'package:flutter_energy/modules/analytics/views/analytics_view.dart';
 import '../modules/alerts/view/alerts_view.dart';
+import '../modules/analytics/views/comparison_view.dart';
+import '../modules/analytics/views/device_detail_view.dart';
+import '../modules/analytics/views/peak_demand_view.dart';
 import '../modules/automation/views/schedule_views.dart';
 import '../modules/main/views/main_view.dart';
 import '../modules/settings/views/settings_view.dart';
@@ -51,6 +54,24 @@ class AppPages {
     GetPage(
       name: Routes.ALERTS,
       page: () => const AlertsView(),
+    ),
+
+    GetPage(
+      name: Routes.DEVICE_ANALYTICS,
+      page: () {
+        final params = Get.parameters;
+        final id = int.parse(params['id'] ?? '0');
+        final name = params['name'] ?? 'Device';
+        return DeviceDetailsView(deviceId: id, deviceName: name);
+      },
+    ),
+    GetPage(
+      name: Routes.DEVICE_PEAK,
+      page: () => const PeakDemandView(),
+    ),
+    GetPage(
+      name: Routes.COMPARISON,
+      page: () => const ComparisonView(),
     ),
   ];
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../core/core/utilities/logs.dart';
 import '../services/analytics_service.dart';
-import '../../../core/utilities/logger.dart';
 
 class PeakDemandController extends GetxController {
   final AnalyticsService _analyticsService = AnalyticsService();
@@ -50,7 +50,7 @@ class PeakDemandController extends GetxController {
           try {
             overallPeakDate.value = DateTime.parse(overallPeak['date']);
           } catch (e) {
-            Logger.error('Failed to parse overall peak date: $e');
+            DevLogs.logError('Failed to parse overall peak date: $e');
             overallPeakDate.value = null;
           }
         }
@@ -66,7 +66,7 @@ class PeakDemandController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();
-      Logger.error('Failed to fetch peak demand summary: $e');
+      DevLogs.logError('Failed to fetch peak demand summary: $e');
     } finally {
       isLoading.value = false;
     }
@@ -119,7 +119,7 @@ class PeakDemandController extends GetxController {
         dailyPeakHour.value = 0;
       }
     } catch (e) {
-      Logger.error('Failed to fetch peak demand for date: $e');
+      DevLogs.logError('Failed to fetch peak demand for date: $e');
       Get.snackbar(
         'Error',
         'Failed to fetch peak demand data: $e',
