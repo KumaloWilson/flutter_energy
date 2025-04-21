@@ -6,7 +6,6 @@ import 'package:flutter_energy/modules/analytics/controller/peak_demand_controll
 import 'package:flutter_energy/modules/appliance/controller/appliance_controller.dart';
 import 'package:flutter_energy/modules/auth/controllers/auth_controller.dart';
 import 'package:get/get.dart';
-
 import '../core/core/utilities/logs.dart';
 import '../modules/dashboard/controllers/dashboard_controller.dart';
 import '../modules/main/controller/main_controller.dart';
@@ -17,6 +16,11 @@ class InitialBinding extends Bindings {
   @override
   Future<void> dependencies() async {
     try {
+      Get.put(
+          DashboardController(),
+          permanent: true
+      );
+
       Get.put(
           AlertsController(),
           permanent: true
@@ -37,10 +41,10 @@ class InitialBinding extends Bindings {
           permanent: true
       );
 
-      Get.put(
-          ApplianceController(),
-          permanent: true
-      );
+      // Get.put(
+      //     ApplianceController(),
+      //     permanent: true
+      // );
 
       Get.put(
           AuthController(),
@@ -52,10 +56,7 @@ class InitialBinding extends Bindings {
           permanent: true
       );
 
-      Get.put(
-          DashboardController(),
-          permanent: true
-      );
+
 
       Get.put(
           MainController(),

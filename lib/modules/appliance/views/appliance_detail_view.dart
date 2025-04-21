@@ -12,7 +12,7 @@ class ApplianceDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<ApplianceController>();
+    final controller = Get.put(ApplianceController());
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(

@@ -17,6 +17,7 @@ class ComparisonController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxBool hasError = false.obs;
 
+
   // Devices
   final RxList<ApplianceInfo> devices = <ApplianceInfo>[].obs;
   final RxList<int> selectedDeviceIds = <int>[].obs;
