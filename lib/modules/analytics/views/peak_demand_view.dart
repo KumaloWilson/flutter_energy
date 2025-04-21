@@ -6,11 +6,11 @@ import 'package:intl/intl.dart';
 import '../controller/peak_demand_controller.dart';
 
 class PeakDemandView extends StatelessWidget {
-  const PeakDemandView({Key? key}) : super(key: key);
+  const PeakDemandView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(PeakDemandController());
+    final controller = Get.find<PeakDemandController>();
     final theme = Theme.of(context);
 
     return RefreshIndicator(

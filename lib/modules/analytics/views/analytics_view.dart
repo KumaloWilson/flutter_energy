@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_energy/modules/analytics/views/peak_demand_view.dart';
 import 'package:get/get.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-
 import '../../../shared/widgets/analytics_widget.dart';
 import '../../../shared/widgets/navigation_widget.dart';
 import '../controller/analytics_controller.dart';
@@ -18,7 +16,7 @@ class AnalyticsView extends StatefulWidget {
 
 class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final controller = Get.put(AnalyticsController());
+  final controller = Get.find<AnalyticsController>();
 
   @override
   void initState() {
@@ -39,6 +37,7 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
     return Scaffold(
       appBar: AppBar(
         title: const Text('Energy Analytics'),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -57,6 +56,7 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
           ],
           indicatorColor: theme.colorScheme.onPrimary,
           labelColor: theme.colorScheme.onPrimary,
+
         ),
       ),
       drawer: Obx(() => AnalyticsNavigationDrawer(devices: controller.devices)),

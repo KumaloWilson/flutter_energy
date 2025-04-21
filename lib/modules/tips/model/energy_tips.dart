@@ -27,4 +27,3 @@ class EnergyTip {
     required this.createdAt,
   });
 }
-

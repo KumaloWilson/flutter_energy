@@ -6,11 +6,11 @@ import 'package:intl/intl.dart';
 import '../controller/comparison.controller.dart';
 
 class ComparisonView extends StatelessWidget {
-  const ComparisonView({Key? key}) : super(key: key);
+  const ComparisonView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ComparisonController());
+    final controller = Get.find<ComparisonController>();
     final theme = Theme.of(context);
 
     return RefreshIndicator(

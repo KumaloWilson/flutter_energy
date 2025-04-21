@@ -62,4 +62,3 @@ class TipsService {
     await Future.delayed(const Duration(seconds: 1));
   }
 }
-

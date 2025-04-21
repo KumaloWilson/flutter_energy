@@ -11,7 +11,7 @@ class MainView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(MainController());
+    final controller = Get.find<MainController>();
 
     return Scaffold(
       body: Obx(() => IndexedStack(

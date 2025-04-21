@@ -13,7 +13,7 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(DashboardController());
+    final controller = Get.find<DashboardController>();
 
     return Scaffold(
       appBar: AppBar(

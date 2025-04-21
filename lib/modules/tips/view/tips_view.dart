@@ -9,7 +9,7 @@ class TipsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(TipsController());
+    final controller = Get.find<TipsController>();
 
     return Scaffold(
       appBar: AppBar(

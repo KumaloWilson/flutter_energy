@@ -10,7 +10,7 @@ class AlertsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(AlertsController());
+    final controller = Get.find<AlertsController>();
 
     return Scaffold(
       appBar: AppBar(

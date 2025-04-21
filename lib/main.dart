@@ -3,10 +3,19 @@ import 'package:get/get.dart';
 import 'package:flutter_energy/routes/app_pages.dart';
 import 'package:flutter_energy/theme/app_theme.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+import 'bindings/binding.dart';
+import 'core/core/utilities/logs.dart';
 
+Future<void> main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await InitialBinding().dependencies();
+
+    runApp(const MyApp());
+  } catch (e) {
+    DevLogs.logError('Initialization error: $e');
+  }
+}
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
