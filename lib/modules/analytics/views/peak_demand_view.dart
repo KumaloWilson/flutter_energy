@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../controllers/peak_demand_controller.dart';
-import '../../../core/theme/app_colors.dart';
+
+import '../controller/peak_demand_controller.dart';
 
 class PeakDemandView extends StatelessWidget {
-  const PeakDemandView({Key? key}) : super(key: key);
+  const PeakDemandView({super.key});
 
   @override
   Widget build(BuildContext context) {

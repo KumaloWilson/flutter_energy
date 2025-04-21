@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../controllers/device_details_controller.dart';
-import '../widgets/analytics_widgets.dart';
-import '../../../core/theme/app_colors.dart';
+
+import '../controller/device_details.controller.dart';
+
 
 class DeviceDetailsView extends StatelessWidget {
   final int deviceId;
   final String deviceName;
 
   const DeviceDetailsView({
-    Key? key,
+    super.key,
     required this.deviceId,
     required this.deviceName,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1085,10 +1085,10 @@ class DeviceDetailsView extends StatelessWidget {
                         borderWidth: 2,
                       ),
                     ],
-                    getTitle: (index) {
-                      final hour = index * 4;
+                    getTitle: (value, meta) {
+                      final hour = (value.toInt() * 4).toString().padLeft(2, '0');
                       return RadarChartTitle(
-                        text: '${hour.toString().padLeft(2, '0')}:00',
+                        text: '$hour:00',
                         angle: 0,
                       );
                     },

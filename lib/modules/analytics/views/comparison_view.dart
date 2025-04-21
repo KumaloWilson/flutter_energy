@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../controllers/comparison_controller.dart';
-import '../../../core/theme/app_colors.dart';
+
+import '../controller/comparison.controller.dart';
 
 class ComparisonView extends StatelessWidget {
-  const ComparisonView({Key? key}) : super(key: key);
+  const ComparisonView({super.key});
 
   @override
   Widget build(BuildContext context) {

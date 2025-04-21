@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../controllers/analytics_controller.dart';
-import '../widgets/analytics_widgets.dart';
-import '../widgets/navigation_widgets.dart';
-import '../../../core/theme/app_colors.dart';
+
+import '../../../shared/widgets/analytics_widget.dart';
+import '../../../shared/widgets/navigation_widget.dart';
+import '../controller/analytics_controller.dart';
 
 class AnalyticsView extends StatelessWidget {
-  const AnalyticsView({Key? key}) : super(key: key);
+  const AnalyticsView({super.key});
 
   @override
   Widget build(BuildContext context) {
