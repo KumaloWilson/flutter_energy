@@ -47,4 +47,23 @@ class EnergyService {
       throw Exception('Failed to get last readings: $e');
     }
   }
+
+  Future<Map<int, double>> getCurrentMonthConsumption() async {
+    try {
+      // Get all registered devices
+      final devices = await _apiService.getRegisteredDevices();
+
+      if (devices.isEmpty) {
+        return {};
+      }
+
+      // Extract device IDs
+      final deviceIds = devices.map((device) => device.id).toList();
+
+      // Get monthly consumption for all devices
+      return await _apiService.getCurrentMonthConsumption(deviceIds);
+    } catch (e) {
+      throw Exception('Failed to get monthly consumption: $e');
+    }
+  }
 }

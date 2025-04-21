@@ -3,10 +3,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 class EnergyCard extends StatelessWidget {
   final double totalEnergy;
+  final double monthlyEnergy;
+  final bool isLoadingMonthly;
 
   const EnergyCard({
     super.key,
     required this.totalEnergy,
+    required this.monthlyEnergy,
+    this.isLoadingMonthly = false,
   });
 
   @override
@@ -21,7 +25,7 @@ class EnergyCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total Energy',
+                  'Energy Consumption',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Icon(
@@ -35,23 +39,40 @@ class EnergyCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              '${totalEnergy.toStringAsFixed(2)} Wh',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildEnergyInfo(
+                  context: context,
+                  title: 'Current',
+                  value: totalEnergy,
+                  unit: 'Wh',
+                ),
+                Container(
+                  height: 40,
+                  width: 1,
+                  color: Theme.of(context).dividerColor,
+                ),
+                _buildEnergyInfo(
+                  context: context,
+                  title: 'This Month',
+                  value: monthlyEnergy,
+                  unit: 'kWh',
+                  isLoading: isLoadingMonthly,
+                  valueScale: 0.001, // Convert Wh to kWh
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             LinearProgressIndicator(
               value: 0.7, // This would be calculated based on daily target
               backgroundColor:
-                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              Theme.of(context).colorScheme.primary.withValues(alpha: .2),
             ),
             const SizedBox(height: 8),
             Text(
-              '70% of daily target',
+              'Energy Consumption this month',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -59,5 +80,39 @@ class EnergyCard extends StatelessWidget {
       ),
     );
   }
-}
 
+  Widget _buildEnergyInfo({
+    required BuildContext context,
+    required String title,
+    required double value,
+    required String unit,
+    bool isLoading = false,
+    double valueScale = 1.0,
+  }) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 4),
+          isLoading
+              ? SizedBox(
+            height: 24,
+            width: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+              : Text(
+            '${(value * valueScale).toStringAsFixed(2)} $unit',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

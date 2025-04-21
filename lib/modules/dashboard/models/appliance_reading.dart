@@ -25,7 +25,7 @@ class ApplianceReading {
       current: json['Current'],
       timeOn: json['TimeOn'],
       activeEnergy: json['ActiveEnergy'],
-      readingTimeStamp: DateTime.now(), // Default for backwards compatibility
+      readingTimeStamp: DateTime.parse(json['Reading_Time_Stamp']),
     );
   }
 

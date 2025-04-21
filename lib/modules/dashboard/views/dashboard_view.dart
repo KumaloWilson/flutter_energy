@@ -21,16 +21,19 @@ class DashboardView extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: controller.fetchLastReadings,
+            onPressed: () {
+              controller.fetchLastReadings();
+              controller.fetchMonthlyConsumption();
+            },
           ),
         ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value && controller.readings.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (controller.hasError.value) {
+        if (controller.hasError.value && controller.readings.isEmpty) {
           return _buildErrorView(context, controller);
         }
 
@@ -39,7 +42,10 @@ class DashboardView extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: controller.fetchLastReadings,
+          onRefresh: () async {
+            await controller.fetchLastReadings();
+            await controller.fetchMonthlyConsumption();
+          },
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -50,6 +56,8 @@ class DashboardView extends StatelessWidget {
                     children: [
                       EnergyCard(
                         totalEnergy: controller.totalEnergy.value,
+                        monthlyEnergy: controller.totalMonthlyEnergy.value,
+                        isLoadingMonthly: controller.isLoadingMonthly.value,
                       ).animate().fadeIn().slideX(),
                       const SizedBox(height: 24),
                       const QuickActions().animate().fadeIn(delay: 200.ms),
