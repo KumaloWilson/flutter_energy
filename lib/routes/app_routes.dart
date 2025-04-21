@@ -12,8 +12,8 @@ abstract class Routes {
   static const TIPS = '/tips';
   static const ALERTS = '/alerts';
   static const DEVICE_ANALYTICS = '/device/:id';
-  static const DEVICE_PEAK = 'peak-demand';
-  static const COMPARISON = 'comparison';
+  static const DEVICE_PEAK = '/peak-demand';
+  static const COMPARISON = '/comparison';
 }
 
 

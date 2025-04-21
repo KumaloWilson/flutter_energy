@@ -6,90 +6,78 @@ import 'package:intl/intl.dart';
 import '../controller/peak_demand_controller.dart';
 
 class PeakDemandView extends StatelessWidget {
-  const PeakDemandView({super.key});
+  const PeakDemandView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(PeakDemandController());
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Peak Demand Analysis'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => controller.fetchPeakDemandSummary(),
-            tooltip: 'Refresh Data',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: controller.fetchPeakDemandSummary,
-        child: Obx(() {
-          if (controller.isLoading.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return RefreshIndicator(
+      onRefresh: controller.fetchPeakDemandSummary,
+      child: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (controller.hasError.value) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load data',
-                    style: theme.textTheme.titleLarge,
+        if (controller.hasError.value) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load data',
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    controller.errorMessage.value,
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      controller.errorMessage.value,
-                      style: theme.textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: controller.fetchPeakDemandSummary,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Peak Demand Overview Card
-              _buildPeakDemandOverviewCard(controller, context),
-
-              const SizedBox(height: 24),
-
-              // Date Selector
-              _buildDateSelector(controller, context),
-
-              const SizedBox(height: 16),
-
-              // Hourly Demand Chart
-              _buildHourlyDemandCard(controller, context),
-
-              const SizedBox(height: 24),
-
-              // Peak Hours Analysis
-              _buildPeakHoursAnalysisCard(controller, context),
-
-              const SizedBox(height: 24),
-
-              // Cost Saving Opportunities
-              _buildCostSavingCard(controller, context),
-            ],
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: controller.fetchPeakDemandSummary,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           );
-        }),
-      ),
+        }
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Peak Demand Overview Card
+            _buildPeakDemandOverviewCard(controller, context),
+
+            const SizedBox(height: 24),
+
+            // Date Selector
+            _buildDateSelector(controller, context),
+
+            const SizedBox(height: 16),
+
+            // Hourly Demand Chart
+            _buildHourlyDemandCard(controller, context),
+
+            const SizedBox(height: 24),
+
+            // Peak Hours Analysis
+            _buildPeakHoursAnalysisCard(controller, context),
+
+            const SizedBox(height: 24),
+
+            // Cost Saving Opportunities
+            _buildCostSavingCard(controller, context),
+          ],
+        );
+      }),
     );
   }
 

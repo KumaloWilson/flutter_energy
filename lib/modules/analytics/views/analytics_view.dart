@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_energy/modules/analytics/views/peak_demand_view.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -6,13 +7,33 @@ import 'package:intl/intl.dart';
 import '../../../shared/widgets/analytics_widget.dart';
 import '../../../shared/widgets/navigation_widget.dart';
 import '../controller/analytics_controller.dart';
+import 'comparison_view.dart';
 
-class AnalyticsView extends StatelessWidget {
+class AnalyticsView extends StatefulWidget {
   const AnalyticsView({super.key});
 
   @override
+  State<AnalyticsView> createState() => _AnalyticsViewState();
+}
+
+class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final controller = Get.put(AnalyticsController());
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(AnalyticsController());
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -25,108 +46,186 @@ class AnalyticsView extends StatelessWidget {
             tooltip: 'Refresh Data',
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: false,
+          tabs: const [
+            Tab(icon: Icon(Icons.dashboard), text: 'Dashboard'),
+            Tab(icon: Icon(Icons.bolt), text: 'Peak Demand'),
+            Tab(icon: Icon(Icons.devices), text: 'Devices'),
+            Tab(icon: Icon(Icons.compare_arrows), text: 'Compare'),
+          ],
+          indicatorColor: theme.colorScheme.onPrimary,
+          labelColor: theme.colorScheme.onPrimary,
+        ),
       ),
       drawer: Obx(() => AnalyticsNavigationDrawer(devices: controller.devices)),
-      body: RefreshIndicator(
-        onRefresh: controller.fetchAllData,
-        child: Obx(() {
-          if (controller.isLoading.value && controller.stats.value.dailyData.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // Dashboard Tab
+          _buildDashboardTab(),
 
-          if (controller.hasError.value && controller.stats.value.dailyData.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load data',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      controller.errorMessage.value,
-                      style: theme.textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: controller.fetchAllData,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
+          // Peak Demand Tab
+          const PeakDemandView(),
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Energy Overview Card
-              EnergyOverviewCard(controller: controller),
+          // Devices Tab
+          _buildDevicesTab(),
 
-              const SizedBox(height: 24),
-
-              // Quick Actions Card
-              _buildQuickActionsCard(controller, context),
-
-              const SizedBox(height: 24),
-
-              // Device Selection and Date Filter
-              DeviceSelector(controller: controller),
-
-              const SizedBox(height: 16),
-
-              // Daily Predictions Card
-              EnergyPredictionCard(controller: controller),
-
-              const SizedBox(height: 24),
-
-              // Peak Demand Card
-              PeakDemandCard(controller: controller),
-
-              const SizedBox(height: 24),
-
-              // Weekly Usage Chart
-              WeeklyUsageCard(controller: controller),
-
-              const SizedBox(height: 24),
-
-              // Device Breakdown
-              DeviceBreakdownCard(controller: controller),
-            ],
-          );
-        }),
-      ),
-      bottomNavigationBar: AnalyticsBottomNavigation(
-        currentIndex: 0,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-            // Already on dashboard
-              break;
-            case 1:
-              Get.toNamed('/peak-demand');
-              break;
-            case 2:
-            // Show device selection dialog
-              _showDeviceSelectionDialog(context, controller);
-              break;
-            case 3:
-              Get.toNamed('/comparison');
-              break;
-          }
-        },
+          // Compare Tab
+          const ComparisonView(),
+        ],
       ),
     );
   }
 
-  Widget _buildQuickActionsCard(AnalyticsController controller, BuildContext context) {
+  Widget _buildDashboardTab() {
+    final theme = Theme.of(context);
+
+    return RefreshIndicator(
+      onRefresh: controller.fetchAllData,
+      child: Obx(() {
+        if (controller.isLoading.value && controller.stats.value.dailyData.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.hasError.value && controller.stats.value.dailyData.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load data',
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    controller.errorMessage.value,
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: controller.fetchAllData,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Energy Overview Card
+            EnergyOverviewCard(controller: controller),
+
+            const SizedBox(height: 24),
+
+            // Quick Actions Card
+            _buildQuickActionsCard(controller),
+
+            const SizedBox(height: 24),
+
+            // Device Selection and Date Filter
+            DeviceSelector(controller: controller),
+
+            const SizedBox(height: 16),
+
+            // Daily Predictions Card
+            EnergyPredictionCard(controller: controller),
+
+            const SizedBox(height: 24),
+
+            // Peak Demand Card
+            PeakDemandCard(controller: controller),
+
+            const SizedBox(height: 24),
+
+            // Weekly Usage Chart
+            WeeklyUsageCard(controller: controller),
+
+            const SizedBox(height: 24),
+
+            // Device Breakdown
+            DeviceBreakdownCard(controller: controller),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildDevicesTab() {
+    return Obx(() {
+      if (controller.isLoadingDevices.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (controller.devices.isEmpty) {
+        return const Center(
+          child: Text('No devices found. Please add devices to track energy usage.'),
+        );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: controller.devices.length,
+        itemBuilder: (context, index) {
+          final device = controller.devices[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _getDeviceIcon(device.appliance),
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              title: Text(
+                device.appliance,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text('Rated Power: ${device.ratedPower}'),
+                  Text('Added: ${DateFormat('MMM d, yyyy').format(device.dateAdded)}'),
+                ],
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.arrow_forward_ios, size: 16),
+                onPressed: () {
+                  Get.toNamed('/device/${device.id}', parameters: {'name': device.appliance});
+                },
+              ),
+              onTap: () {
+                Get.toNamed('/device/${device.id}', parameters: {'name': device.appliance});
+              },
+            ),
+          );
+        },
+      );
+    });
+  }
+
+  Widget _buildQuickActionsCard(AnalyticsController controller) {
     final theme = Theme.of(context);
 
     return Card(
@@ -152,26 +251,22 @@ class AnalyticsView extends StatelessWidget {
                 _buildQuickActionItem(
                   icon: Icons.bolt,
                   label: 'Peak Demand',
-                  onTap: () => Get.toNamed('/peak-demand'),
-                  context: context,
+                  onTap: () => _tabController.animateTo(1),
                 ),
                 _buildQuickActionItem(
                   icon: Icons.compare_arrows,
                   label: 'Compare',
-                  onTap: () => Get.toNamed('/comparison'),
-                  context: context,
+                  onTap: () => _tabController.animateTo(3),
                 ),
                 _buildQuickActionItem(
                   icon: Icons.devices,
                   label: 'Devices',
-                  onTap: () => _showDeviceSelectionDialog(context, controller),
-                  context: context,
+                  onTap: () => _tabController.animateTo(2),
                 ),
                 _buildQuickActionItem(
                   icon: Icons.lightbulb_outline,
                   label: 'Tips',
-                  onTap: () => _showEnergyTipsDialog(context),
-                  context: context,
+                  onTap: () => _showEnergyTipsDialog(),
                 ),
               ],
             ),
@@ -185,7 +280,6 @@ class AnalyticsView extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    required BuildContext context,
   }) {
     final theme = Theme.of(context);
 
@@ -219,43 +313,7 @@ class AnalyticsView extends StatelessWidget {
     );
   }
 
-  void _showDeviceSelectionDialog(BuildContext context, AnalyticsController controller) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Device'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: controller.devices.length,
-            itemBuilder: (context, index) {
-              final device = controller.devices[index];
-              return ListTile(
-                leading: Icon(_getDeviceIcon(device.appliance)),
-                title: Text(device.appliance),
-                subtitle: Text(device.ratedPower),
-                onTap: () {
-                  Get.back();
-                  Get.toNamed('/device/${device.id}', parameters: {'name': device.appliance});
-                },
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showEnergyTipsDialog(BuildContext context) {
-    final theme = Theme.of(context);
-
+  void _showEnergyTipsDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -265,46 +323,14 @@ class AnalyticsView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTipItem(
-                'Turn off devices when not in use',
-                Icons.power_settings_new,
-                context,
-              ),
-              _buildTipItem(
-                'Use energy-efficient appliances',
-                Icons.eco,
-                context,
-              ),
-              _buildTipItem(
-                'Avoid peak hours (9:00 - 12:00)',
-                Icons.access_time,
-                context,
-              ),
-              _buildTipItem(
-                'Lower thermostat when away',
-                Icons.thermostat,
-                context,
-              ),
-              _buildTipItem(
-                'Use smart plugs to automate device usage',
-                Icons.smart_toy,
-                context,
-              ),
-              _buildTipItem(
-                'Regularly maintain appliances for optimal efficiency',
-                Icons.build,
-                context,
-              ),
-              _buildTipItem(
-                'Use natural light during the day',
-                Icons.wb_sunny,
-                context,
-              ),
-              _buildTipItem(
-                'Unplug chargers when not in use',
-                Icons.battery_charging_full,
-                context,
-              ),
+              _buildTipItem('Turn off devices when not in use', Icons.power_settings_new),
+              _buildTipItem('Use energy-efficient appliances', Icons.eco),
+              _buildTipItem('Avoid peak hours (9:00 - 12:00)', Icons.access_time),
+              _buildTipItem('Lower thermostat when away', Icons.thermostat),
+              _buildTipItem('Use smart plugs to automate device usage', Icons.smart_toy),
+              _buildTipItem('Regularly maintain appliances for optimal efficiency', Icons.build),
+              _buildTipItem('Use natural light during the day', Icons.wb_sunny),
+              _buildTipItem('Unplug chargers when not in use', Icons.battery_charging_full),
             ],
           ),
         ),
@@ -318,7 +344,7 @@ class AnalyticsView extends StatelessWidget {
     );
   }
 
-  Widget _buildTipItem(String tip, IconData icon, BuildContext context) {
+  Widget _buildTipItem(String tip, IconData icon) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(

@@ -6,85 +6,73 @@ import 'package:intl/intl.dart';
 import '../controller/comparison.controller.dart';
 
 class ComparisonView extends StatelessWidget {
-  const ComparisonView({super.key});
+  const ComparisonView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ComparisonController());
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Energy Comparison'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => controller.fetchAllData(),
-            tooltip: 'Refresh Data',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: controller.fetchAllData,
-        child: Obx(() {
-          if (controller.isLoading.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return RefreshIndicator(
+      onRefresh: controller.fetchAllData,
+      child: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (controller.hasError.value) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load data',
-                    style: theme.textTheme.titleLarge,
+        if (controller.hasError.value) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load data',
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    controller.errorMessage.value,
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      controller.errorMessage.value,
-                      style: theme.textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: controller.fetchAllData,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Comparison Settings Card
-              _buildComparisonSettingsCard(controller, context),
-
-              const SizedBox(height: 24),
-
-              // Device Comparison Chart
-              _buildDeviceComparisonCard(controller, context),
-
-              const SizedBox(height: 24),
-
-              // Time Period Comparison Chart
-              _buildTimePeriodComparisonCard(controller, context),
-
-              const SizedBox(height: 24),
-
-              // Efficiency Comparison Card
-              _buildEfficiencyComparisonCard(controller, context),
-            ],
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: controller.fetchAllData,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           );
-        }),
-      ),
+        }
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Comparison Settings Card
+            _buildComparisonSettingsCard(controller, context),
+
+            const SizedBox(height: 24),
+
+            // Device Comparison Chart
+            _buildDeviceComparisonCard(controller, context),
+
+            const SizedBox(height: 24),
+
+            // Time Period Comparison Chart
+            _buildTimePeriodComparisonCard(controller, context),
+
+            const SizedBox(height: 24),
+
+            // Efficiency Comparison Card
+            _buildEfficiencyComparisonCard(controller, context),
+          ],
+        );
+      }),
     );
   }
 
