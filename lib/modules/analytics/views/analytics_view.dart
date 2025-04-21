@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-
 import '../../dashboard/models/appliance_reading.dart';
 import '../controller/analytics_controller.dart';
 
@@ -128,6 +126,7 @@ class AnalyticsView extends StatelessWidget {
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 18
                 ),
               ),
               const SizedBox(height: 24),
@@ -286,7 +285,7 @@ class AnalyticsView extends StatelessWidget {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 14,
           ),
         ),
       ],

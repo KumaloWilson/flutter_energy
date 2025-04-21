@@ -3,6 +3,8 @@ import 'package:flutter_energy/modules/analytics/models/energy_stats.dart';
 import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/core/utilities/logs.dart';
+
 class AnalyticsService {
   // Updated base URL from your provided endpoint
   final Dio _dio = Dio(BaseOptions(
@@ -11,48 +13,6 @@ class AnalyticsService {
     receiveTimeout: const Duration(seconds: 60),
   ));
 
-
-  // Get total consumption for all devices
-  Future<List<Map<String, dynamic>>> getTotalConsumption({List<int>? deviceIds, DateTime? startDate, DateTime? endDate}) async {
-    try {
-      // Format dates for API request
-      final now = DateTime.now();
-      final start = startDate ?? now.subtract(const Duration(days: 7));
-      final end = endDate ?? now;
-
-      final formattedStart = DateFormat('yyyy-MM-ddTHH:mm:ss').format(start);
-      final formattedEnd = DateFormat('yyyy-MM-ddTHH:mm:ss').format(end);
-
-      String deviceIdsParam = '';
-      if (deviceIds != null && deviceIds.isNotEmpty) {
-        deviceIdsParam = deviceIds.join(',');
-      }
-
-      final response = await _dio.get(
-        '/consumption/total',
-        queryParameters: {
-          'device_ids': deviceIdsParam,
-          'start_date': formattedStart,
-          'end_date': formattedEnd,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        // Convert to List if it's not already
-        if (response.data is List) {
-          return List<Map<String, dynamic>>.from(response.data);
-        } else {
-          return [response.data as Map<String, dynamic>];
-        }
-      } else {
-        throw Exception('Failed to load total consumption: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      throw _handleError(e, 'Failed to fetch total consumption');
-    } catch (e) {
-      throw Exception('Unexpected error while fetching total consumption: $e');
-    }
-  }
 
   // Get energy predictions for a device
   Future<List<Map<String, dynamic>>> getEnergyPredictions(int deviceId, {String? date}) async {
@@ -232,7 +192,7 @@ class AnalyticsService {
                 }
               } catch (e) {
                 // Just continue if we can't get predictions for a device
-                print('Could not get predictions for device ${device.id} on $formattedDate: $e');
+                DevLogs.logError('Could not get predictions for device ${device.id} on $formattedDate: $e');
               }
             }
 
@@ -240,7 +200,7 @@ class AnalyticsService {
           } catch (e) {
             // If we can't get predictions, use a fallback value
             dailyUsageValue = 2000 + (i * 100);
-            print('Using fallback value for $formattedDate: $e');
+            DevLogs.logError('Using fallback value for $formattedDate: $e');
           }
         }
 
