@@ -97,14 +97,7 @@ class ApplianceDetailView extends StatelessWidget {
           ),
         ],
       )),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showScheduleDialog(context, controller);
-        },
-        icon: const Icon(Icons.edit),
-        label: const Text('Edit Schedule'),
-        elevation: 3,
-      ),
+
     );
   }
 
@@ -172,7 +165,7 @@ class ApplianceDetailView extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 4),
@@ -273,7 +266,7 @@ class ApplianceDetailView extends StatelessWidget {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                   ),
                 ),
                 Icon(icon, color: color, size: 24),
@@ -340,7 +333,7 @@ class ApplianceDetailView extends StatelessWidget {
                       getDrawingHorizontalLine: (value) {
                         return FlLine(
                           color:
-                          Theme.of(context).dividerColor.withOpacity(0.3),
+                          Theme.of(context).dividerColor.withValues(alpha: 0.3),
                           strokeWidth: 1,
                         );
                       },
@@ -357,7 +350,7 @@ class ApplianceDetailView extends StatelessWidget {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurface
-                                    .withOpacity(0.6),
+                                    .withValues(alpha: 0.6),
                                 fontSize: 10,
                               ),
                             );
@@ -389,7 +382,7 @@ class ApplianceDetailView extends StatelessWidget {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurface
-                                      .withOpacity(0.6),
+                                      .withValues(alpha: 0.6),
                                   fontSize: 10,
                                 ),
                               ),
@@ -437,7 +430,7 @@ class ApplianceDetailView extends StatelessWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .primary
-                              .withOpacity(0.2),
+                              .withValues(alpha: 0.2),
                         ),
                       ),
                     ],
@@ -465,7 +458,7 @@ class ApplianceDetailView extends StatelessWidget {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurface
-                                        .withOpacity(0.7),
+                                        .withValues(alpha: 0.7),
                                     fontWeight: FontWeight.normal,
                                     fontSize: 12,
                                   ),
@@ -563,7 +556,7 @@ class ApplianceDetailView extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: colorScheme.primary.withOpacity(0.3),
+                      color: colorScheme.primary.withValues(alpha: 0.3),
                     ),
                   ),
               ],
@@ -586,7 +579,7 @@ class ApplianceDetailView extends StatelessWidget {
                   Text(
                     '${entry.value} • ${DateFormat('MMM d, h:mm a').format(entry.timestamp)}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -683,7 +676,7 @@ class ApplianceDetailView extends StatelessWidget {
                 value: percentage,
                 strokeWidth: 10,
                 backgroundColor:
-                Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
@@ -757,87 +750,6 @@ class ApplianceDetailView extends StatelessWidget {
         ),
       ),
     ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2, end: 0);
-  }
-
-  void _showScheduleDialog(BuildContext context, ApplianceController controller) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Schedule'),
-          content: SingleChildScrollView(
-            child: Obx(() => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: const Text('Start Time'),
-                  subtitle: Text(
-                    _formatTimeOfDay(controller.schedule.value.startTime),
-                  ),
-                  onTap: () async {
-                    final TimeOfDay? picked = await showTimePicker(
-                      context: context,
-                      initialTime: controller.schedule.value.startTime,
-                    );
-                    if (picked != null) {
-                      controller.updateScheduleStartTime(picked);
-                    }
-                  },
-                ),
-                ListTile(
-                  title: const Text('End Time'),
-                  subtitle: Text(
-                    _formatTimeOfDay(controller.schedule.value.endTime),
-                  ),
-                  onTap: () async {
-                    final TimeOfDay? picked = await showTimePicker(
-                      context: context,
-                      initialTime: controller.schedule.value.endTime,
-                    );
-                    if (picked != null) {
-                      controller.updateScheduleEndTime(picked);
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                const Text('Active Days'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: List.generate(7, (index) {
-                    final day = _getDayLabel(index);
-                    final isActive = controller.schedule.value.activeDays
-                        .contains(index);
-                    return FilterChip(
-                      label: Text(day),
-                      selected: isActive,
-                      onSelected: (selected) {
-                        controller.toggleScheduleDay(index, selected);
-                      },
-                    );
-                  }),
-                ),
-              ],
-            )),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                controller.saveSchedule();
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   IconData _getApplianceIcon(String appliance) {
