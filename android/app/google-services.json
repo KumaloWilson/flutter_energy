@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "595252956866",
+    "project_id": "energy-managemement",
+    "storage_bucket": "energy-managemement.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595252956866:android:63d420e8a1f1f46df1355b",
+        "android_client_info": {
+          "package_name": "com.rimai.bot.app.rimai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaC9gPW04TT8CtIKtSBKs314Z6qfF2xhM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
