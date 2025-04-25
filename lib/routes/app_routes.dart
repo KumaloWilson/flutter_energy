@@ -14,6 +14,14 @@ abstract class Routes {
   static const DEVICE_ANALYTICS = '/device/:id';
   static const DEVICE_PEAK = '/peak-demand';
   static const COMPARISON = '/comparison';
+  static const ROOM_DETAIL = '/room-detail';
+  static const PROFILE = '/profile';
+  static const FAMILY = '/family';
+  static const NOTIFICATIONS = '/notifications';
+  static const HELP = '/help';
+  static const METER = '/meter';
+  static const GOALS = '/goals';
+
 }
 
 

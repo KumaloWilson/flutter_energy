@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_energy/constants/image_paths.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:lottie/lottie.dart';
-import 'package:flutter_energy/modules/auth/controllers/auth_controller.dart';
-import 'package:flutter_energy/shared/widgets/custom_button.dart';
-import 'package:flutter_energy/shared/widgets/custom_text_field.dart';
+
+import '../../../shared/widgets/custom_button.dart';
+import '../../../shared/widgets/custom_text_field.dart';
+import '../controllers/auth_controller.dart';
 
 class SignupView extends StatelessWidget {
   const SignupView({super.key});
@@ -16,8 +15,14 @@ class SignupView extends StatelessWidget {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final theme = Theme.of(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Create Account'),
+        elevation: 0,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -25,115 +30,125 @@ class SignupView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 20),
-                Icon(
-                  Icons.energy_savings_leaf,
-                  size: 80,
-                  color: Theme.of(context).colorScheme.primary,
-                )
-                    .animate()
-                    .fadeIn(duration: 600.ms)
-                    .scale(delay: 200.ms),
-                const SizedBox(height: 32),
+                // App logo
+                Center(
+                  child: Icon(
+                    Icons.home_outlined,
+                    size: 64,
+                    color: theme.colorScheme.primary,
+                  ),
+                ).animate().fadeIn(duration: 600.ms).scale(delay: 200.ms),
+
+                const SizedBox(height: 24),
+
                 Text(
-                  'Create Account',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  'Join Smart Energy',
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 300.ms),
+
                 const SizedBox(height: 8),
+
                 Text(
                   'Monitor and optimize your energy usage',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 400.ms),
+
                 const SizedBox(height: 32),
+
+                // Signup form
                 CustomTextField(
                   controller: nameController,
                   hint: 'Full Name',
                   prefixIcon: Icons.person_outline,
                 ).animate().fadeIn(delay: 500.ms).slideX(),
+
                 const SizedBox(height: 16),
+
                 CustomTextField(
                   controller: emailController,
                   hint: 'Email',
                   prefixIcon: Icons.email_outlined,
                 ).animate().fadeIn(delay: 600.ms).slideX(),
+
                 const SizedBox(height: 16),
+
                 CustomTextField(
                   controller: passwordController,
                   hint: 'Password',
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
                 ).animate().fadeIn(delay: 700.ms).slideX(),
+
+                const SizedBox(height: 16),
+
+                CustomTextField(
+                  controller: confirmPasswordController,
+                  hint: 'Confirm Password',
+                  prefixIcon: Icons.lock_outline,
+                  isPassword: true,
+                ).animate().fadeIn(delay: 800.ms).slideX(),
+
                 const SizedBox(height: 24),
+
                 Obx(() => CustomButton(
-                  onPressed: () => controller.signup(
-                    nameController.text,
-                    emailController.text,
-                    passwordController.text,
-                  ),
+                  onPressed: () {
+                    if (passwordController.text != confirmPasswordController.text) {
+                      Get.snackbar(
+                        'Error',
+                        'Passwords do not match',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.red.withOpacity(0.1),
+                        colorText: Colors.red,
+                      );
+                      return;
+                    }
+
+                    controller.register(
+                      emailController.text,
+                      passwordController.text,
+                      nameController.text,
+                    );
+                  },
                   text: 'Sign Up',
                   isLoading: controller.isLoading.value,
-                )).animate().fadeIn(delay: 800.ms).slideY(),
+                )).animate().fadeIn(delay: 900.ms).slideY(),
+
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'or',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                    ),
-                  ],
-                ).animate().fadeIn(delay: 900.ms),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: Image.asset(
-                    ImageAssetPaths.googleIcon,
-                    height: 24,
-                  ),
-                  label: const Text('Continue with Google'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 1000.ms).slideY(),
-                const SizedBox(height: 24),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Already have an account? ',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+                    Text('Already have an account?'),
                     TextButton(
                       onPressed: () => Get.back(),
-                      child: const Text('Login'),
+                      child: Text('Login'),
                     ),
                   ],
-                ).animate().fadeIn(delay: 1100.ms),
+                ).animate().fadeIn(delay: 1000.ms),
+
+                // Error message
+                Obx(() => controller.errorMessage.value.isNotEmpty
+                    ? Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    controller.errorMessage.value,
+                    style: TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+                    : SizedBox.shrink(),
+                ),
               ],
             ),
           ),
@@ -142,4 +157,3 @@ class SignupView extends StatelessWidget {
     );
   }
 }
-

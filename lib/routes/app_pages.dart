@@ -7,7 +7,11 @@ import '../modules/alerts/view/alerts_view.dart';
 import '../modules/analytics/views/comparison_view.dart';
 import '../modules/analytics/views/device_detail_view.dart';
 import '../modules/analytics/views/peak_demand_view.dart';
+import '../modules/auth/views/home_view.dart';
+import '../modules/auth/views/profile_view.dart';
+import '../modules/family_access/view/family_view.dart';
 import '../modules/main/views/main_view.dart';
+import '../modules/rooms/view/rooms_details.dart';
 import '../modules/settings/views/settings_view.dart';
 import '../modules/tips/view/tips_view.dart';
 part 'app_routes.dart';
@@ -68,6 +72,45 @@ class AppPages {
     GetPage(
       name: Routes.COMPARISON,
       page: () => const ComparisonView(),
+    ),
+
+    GetPage(
+      name: Routes.HOME,
+      page: () => HomeView(),
+    ),
+    GetPage(
+      name: Routes.LOGIN,
+      page: () => LoginView(),
+    ),
+    GetPage(
+      name: Routes.SIGNUP,
+      page: () => SignupView(),
+    ),
+
+    GetPage(
+      name: Routes.ROOM_DETAIL,
+      page: () => RoomDetailView(),
+    ),
+
+    GetPage(
+      name: Routes.APPLIANCE_DETAIL,
+      page: () => ApplianceDetailView(),
+    ),
+    GetPage(
+      name: Routes.PROFILE,
+      page: () => ProfileView(),
+    ),
+    GetPage(
+      name: Routes.SETTINGS,
+      page: () => SettingsView(),
+    ),
+    GetPage(
+      name: Routes.FAMILY,
+      page: () => FamilyView(),
+    ),
+    GetPage(
+      name: Routes.ANALYTICS,
+      page: () => AnalyticsView(),
     ),
   ];
 }
