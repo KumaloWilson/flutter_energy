@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
-import '../../modules/analytics/controller/analytics_controller.dart';
+import '../../modules/analytics/controllers/analytics_controller.dart';
+
 
 class EnergyOverviewCard extends StatelessWidget {
   final AnalyticsController controller;

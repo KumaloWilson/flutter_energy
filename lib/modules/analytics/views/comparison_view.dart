@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
-import '../../../shared/widgets/comparison_widgets.dart';
-import '../controller/comparison.controller.dart';
-
+import '../controllers/comparison_controller.dart';
+import '../widgets/comparison_widgets.dart';
 
 class ComparisonView extends StatelessWidget {
   const ComparisonView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Find or create the controller only once
     final controller = Get.put(ComparisonController());
     final theme = Theme.of(context);
 
@@ -51,15 +53,15 @@ class ErrorDisplay extends StatelessWidget {
   final VoidCallback onRetry;
 
   const ErrorDisplay({
-    super.key,
+    Key? key,
     required this.errorMessage,
     required this.onRetry,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

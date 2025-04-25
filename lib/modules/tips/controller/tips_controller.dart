@@ -87,4 +87,3 @@ class TipsController extends GetxController {
     }
   }
 }
-

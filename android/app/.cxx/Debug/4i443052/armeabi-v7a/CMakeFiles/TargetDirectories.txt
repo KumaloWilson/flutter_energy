@@ -1,0 +1,2 @@
+/home/watkay/StudioProjects/energy_management/android/app/.cxx/Debug/4i443052/armeabi-v7a/CMakeFiles/edit_cache.dir
+/home/watkay/StudioProjects/energy_management/android/app/.cxx/Debug/4i443052/armeabi-v7a/CMakeFiles/rebuild_cache.dir

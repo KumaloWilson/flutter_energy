@@ -109,4 +109,3 @@ class Stat {
     this.isPositive,
   });
 }
-

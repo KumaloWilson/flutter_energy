@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_energy/modules/analytics/views/peak_demand_view.dart';
 import 'package:get/get.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../../../shared/widgets/analytics_widget.dart';
-import '../../../shared/widgets/navigation_widget.dart';
-import '../controller/analytics_controller.dart';
+import '../controllers/analytics_controller.dart';
+import '../widgets/analytics_widgets.dart';
+import '../widgets/navigation_widgets.dart';
+import '../../../core/theme/app_colors.dart';
 import 'comparison_view.dart';
 
 class AnalyticsView extends StatefulWidget {
@@ -16,7 +18,7 @@ class AnalyticsView extends StatefulWidget {
 
 class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final controller = Get.find<AnalyticsController>();
+  final controller = Get.put(AnalyticsController());
 
   @override
   void initState() {
@@ -37,7 +39,6 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
     return Scaffold(
       appBar: AppBar(
         title: const Text('Energy Analytics'),
-        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -56,7 +57,6 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
           ],
           indicatorColor: theme.colorScheme.onPrimary,
           labelColor: theme.colorScheme.onPrimary,
-
         ),
       ),
       drawer: Obx(() => AnalyticsNavigationDrawer(devices: controller.devices)),
@@ -65,13 +65,13 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
         children: [
           // Dashboard Tab
           _buildDashboardTab(),
-
+          
           // Peak Demand Tab
           const PeakDemandView(),
-
+          
           // Devices Tab
           _buildDevicesTab(),
-
+          
           // Compare Tab
           const ComparisonView(),
         ],
@@ -81,7 +81,7 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
 
   Widget _buildDashboardTab() {
     final theme = Theme.of(context);
-
+    
     return RefreshIndicator(
       onRefresh: controller.fetchAllData,
       child: Obx(() {
@@ -227,7 +227,7 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
 
   Widget _buildQuickActionsCard(AnalyticsController controller) {
     final theme = Theme.of(context);
-
+    
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -282,7 +282,7 @@ class _AnalyticsViewState extends State<AnalyticsView> with SingleTickerProvider
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-
+    
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),

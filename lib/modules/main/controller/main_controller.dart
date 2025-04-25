@@ -7,4 +7,3 @@ class MainController extends GetxController {
     currentIndex.value = index;
   }
 }
-

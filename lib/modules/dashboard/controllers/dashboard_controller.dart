@@ -1,9 +1,10 @@
-import 'package:flutter_energy/core/core/utilities/logs.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
 import 'package:flutter_energy/modules/dashboard/services/energy_service.dart';
 import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
+
+import '../../../core/utilities/logger.dart';
 
 class DashboardController extends GetxController {
   final EnergyService _energyService = EnergyService();

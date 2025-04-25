@@ -199,4 +199,3 @@ class _AlertCard extends StatelessWidget {
     );
   }
 }
-

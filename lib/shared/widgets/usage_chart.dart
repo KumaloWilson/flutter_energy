@@ -64,4 +64,3 @@ class UsageChart extends StatelessWidget {
     );
   }
 }
-

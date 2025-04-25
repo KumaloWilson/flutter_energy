@@ -24,4 +24,3 @@ class SettingsService {
     await Future.delayed(const Duration(seconds: 1));
   }
 }
-

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../dashboard/models/appliance_reading.dart';
-import '../service/applince_service.dart';
+import '../service/appliance_service.dart';
 
 
 class ApplianceController extends GetxController {

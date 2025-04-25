@@ -15,4 +15,3 @@ class UserSettings {
     required this.notificationPreferences,
   });
 }
-

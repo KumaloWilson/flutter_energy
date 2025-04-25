@@ -81,4 +81,3 @@ class _QuickActionCard extends StatelessWidget {
     );
   }
 }
-

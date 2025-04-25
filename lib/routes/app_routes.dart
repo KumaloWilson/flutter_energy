@@ -3,6 +3,7 @@ part of 'app_pages.dart';
 abstract class Routes {
   static const LOGIN = '/login';
   static const SIGNUP = '/signup';
+  static const COMPLETE_PROFILE = '/complete-profile';
   static const HOME = '/home';
   static const DASHBOARD = '/dashboard';
   static const ANALYTICS = '/analytics';
@@ -15,13 +16,5 @@ abstract class Routes {
   static const DEVICE_PEAK = '/peak-demand';
   static const COMPARISON = '/comparison';
   static const ROOM_DETAIL = '/room-detail';
-  static const PROFILE = '/profile';
-  static const FAMILY = '/family';
-  static const NOTIFICATIONS = '/notifications';
-  static const HELP = '/help';
-  static const METER = '/meter';
-  static const GOALS = '/goals';
-
+  static const FAMILY_ACCESS = '/family-access';
 }
-
-

@@ -120,4 +120,3 @@ class _PredictionItem extends StatelessWidget {
     );
   }
 }
-

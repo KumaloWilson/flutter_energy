@@ -5,6 +5,7 @@ class CustomTextField extends StatelessWidget {
   final String hint;
   final IconData prefixIcon;
   final bool isPassword;
+  final TextInputType? keyboardType;
 
   const CustomTextField({
     super.key,
@@ -12,6 +13,7 @@ class CustomTextField extends StatelessWidget {
     required this.hint,
     required this.prefixIcon,
     this.isPassword = false,
+    this.keyboardType
   });
 
   @override
@@ -19,6 +21,7 @@ class CustomTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: isPassword,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(prefixIcon),
@@ -42,4 +45,3 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
-

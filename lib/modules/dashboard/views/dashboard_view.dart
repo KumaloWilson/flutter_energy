@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_energy/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:flutter_energy/shared/widgets/energy_card.dart';
-import 'package:flutter_energy/shared/widgets/reading_card.dart';
+import 'package:flutter_energy/shared/widgets/appliance_card.dart';
 
 import '../../../shared/widgets/quick_actions.dart';
 import '../../../shared/widgets/usage_chart.dart';
@@ -87,7 +87,7 @@ class DashboardView extends StatelessWidget {
                         horizontal: 16.0,
                         vertical: 8.0,
                       ),
-                      child: ApplianceReadingCard(reading: reading)
+                      child: ApplianceCard(reading: reading)
                           .animate()
                           .fadeIn(delay: (300 + (index * 100)).ms)
                           .slideX(),

@@ -270,4 +270,3 @@ class _TipCard extends StatelessWidget {
     );
   }
 }
-

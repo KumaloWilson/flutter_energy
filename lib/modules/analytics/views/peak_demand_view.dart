@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-
-import '../controller/peak_demand_controller.dart';
+import '../controllers/peak_demand_controller.dart';
+import '../../../core/theme/app_colors.dart';
 
 class PeakDemandView extends StatelessWidget {
-  const PeakDemandView({super.key});
+  const PeakDemandView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<PeakDemandController>();
+    final controller = Get.put(PeakDemandController());
     final theme = Theme.of(context);
 
     return RefreshIndicator(
@@ -55,24 +55,24 @@ class PeakDemandView extends StatelessWidget {
           children: [
             // Peak Demand Overview Card
             _buildPeakDemandOverviewCard(controller, context),
-
+            
             const SizedBox(height: 24),
-
+            
             // Date Selector
             _buildDateSelector(controller, context),
-
+            
             const SizedBox(height: 16),
-
+            
             // Hourly Demand Chart
             _buildHourlyDemandCard(controller, context),
-
+            
             const SizedBox(height: 24),
-
+            
             // Peak Hours Analysis
             _buildPeakHoursAnalysisCard(controller, context),
-
+            
             const SizedBox(height: 24),
-
+            
             // Cost Saving Opportunities
             _buildCostSavingCard(controller, context),
           ],
@@ -83,7 +83,7 @@ class PeakDemandView extends StatelessWidget {
 
   Widget _buildPeakDemandOverviewCard(PeakDemandController controller, BuildContext context) {
     final theme = Theme.of(context);
-
+    
     return Card(
       elevation: 2,
       clipBehavior: Clip.antiAlias,
@@ -109,9 +109,9 @@ class PeakDemandView extends StatelessWidget {
               Text(
                 'Peak Demand Overview',
                 style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18
                 ),
               ),
               const SizedBox(height: 24),
@@ -222,7 +222,7 @@ class PeakDemandView extends StatelessWidget {
 
   Widget _buildDateSelector(PeakDemandController controller, BuildContext context) {
     final theme = Theme.of(context);
-
+    
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -289,7 +289,7 @@ class PeakDemandView extends StatelessWidget {
 
   Widget _buildHourlyDemandCard(PeakDemandController controller, BuildContext context) {
     final theme = Theme.of(context);
-
+    
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -403,9 +403,9 @@ class PeakDemandView extends StatelessWidget {
                     ),
                     barGroups: List.generate(
                       controller.hourlyDemandData.length,
-                          (index) {
+                      (index) {
                         final data = controller.hourlyDemandData[index];
-
+                        
                         // Determine color based on demand level
                         Color barColor;
                         if (data.hour == controller.dailyPeakHour.value) {
@@ -505,7 +505,7 @@ class PeakDemandView extends StatelessWidget {
 
   Widget _buildPeakHoursAnalysisCard(PeakDemandController controller, BuildContext context) {
     final theme = Theme.of(context);
-
+    
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -536,10 +536,10 @@ class PeakDemandView extends StatelessWidget {
               // Sort data by demand (descending)
               final sortedData = List<HourlyDemandData>.from(controller.hourlyDemandData)
                 ..sort((a, b) => b.value.compareTo(a.value));
-
+              
               // Take top 5 peak hours
               final topPeakHours = sortedData.take(5).toList();
-
+              
               return Column(
                 children: [
                   for (int i = 0; i < topPeakHours.length; i++)
@@ -601,7 +601,7 @@ class PeakDemandView extends StatelessWidget {
   Widget _buildPeakHourItem(int rank, int hour, double demand, double maxDemand, BuildContext context) {
     final theme = Theme.of(context);
     final percentage = (demand / maxDemand) * 100;
-
+    
     // Determine color based on rank
     Color color;
     if (rank == 1) {
@@ -613,7 +613,7 @@ class PeakDemandView extends StatelessWidget {
     } else {
       color = Colors.blue;
     }
-
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -674,7 +674,7 @@ class PeakDemandView extends StatelessWidget {
 
   Widget _buildCostSavingCard(PeakDemandController controller, BuildContext context) {
     final theme = Theme.of(context);
-
+    
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -726,9 +726,9 @@ class PeakDemandView extends StatelessWidget {
                               final peakHourUsage = controller.hourlyDemandData.isNotEmpty
                                   ? controller.hourlyDemandData.map((e) => e.value).reduce((a, b) => a > b ? a : b)
                                   : 0.0;
-
+                              
                               final potentialSavings = peakHourUsage * 0.15 * 30 * 0.2; // 20% reduction
-
+                              
                               return Text(
                                 '\$${potentialSavings.toStringAsFixed(2)}',
                                 style: theme.textTheme.headlineMedium?.copyWith(

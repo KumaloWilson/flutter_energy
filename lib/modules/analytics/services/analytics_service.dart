@@ -1,30 +1,33 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_energy/modules/analytics/models/energy_stats.dart';
+import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
 import 'package:intl/intl.dart';
+
+import '../../../core/utilities/logger.dart';
 
 class AnalyticsService {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://192.168.0.178:5000/api',
-    connectTimeout: const Duration(seconds: 50),
-    receiveTimeout: const Duration(seconds: 50),
+    baseUrl: 'https://test.kingsmansoftwares.co.zw/api',
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
   ));
 
   // Get energy predictions for a device
   Future<List<Map<String, dynamic>>> getEnergyPredictions(int deviceId, {String? date}) async {
     try {
       final formattedDate = date ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
-
+      
       final response = await _dio.get('/predictions/energy');
-
+      
       if (response.statusCode == 200) {
         final List<dynamic> allPredictions = response.data;
-
+        
         // Filter predictions for the specific device and date
         final devicePredictions = allPredictions.where((prediction) {
-          return prediction['device_id'] == deviceId &&
-              prediction['prediction_date'].toString().contains(formattedDate);
+          return prediction['device_id'] == deviceId && 
+                 prediction['prediction_date'].toString().contains(formattedDate);
         }).toList();
-
+        
         return List<Map<String, dynamic>>.from(devicePredictions);
       } else {
         throw Exception('Failed to load energy predictions: ${response.statusCode}');
@@ -40,7 +43,7 @@ class AnalyticsService {
   Future<Map<String, dynamic>> getDevicePredictionsSummary(int deviceId) async {
     try {
       final response = await _dio.get('/predictions/device/$deviceId/summary');
-
+      
       if (response.statusCode == 200) {
         return response.data;
       } else {
@@ -57,7 +60,7 @@ class AnalyticsService {
   Future<Map<String, dynamic>> getPeakDemandSummary() async {
     try {
       final response = await _dio.get('/predictions/peak/summary');
-
+      
       if (response.statusCode == 200) {
         return response.data;
       } else {
@@ -74,7 +77,7 @@ class AnalyticsService {
   Future<Map<String, dynamic>> getDashboardOverview() async {
     try {
       final response = await _dio.get('/dashboard/overview');
-
+      
       if (response.statusCode == 200) {
         return response.data;
       } else {
@@ -91,7 +94,7 @@ class AnalyticsService {
   Future<List<Map<String, dynamic>>> getTotalConsumption() async {
     try {
       final response = await _dio.get('/consumption/total');
-
+      
       if (response.statusCode == 200) {
         return List<Map<String, dynamic>>.from(response.data);
       } else {
@@ -109,26 +112,26 @@ class AnalyticsService {
     try {
       // Get dashboard overview for summary data
       final overview = await getDashboardOverview();
-
+      
       // Get total consumption for devices
       final consumption = await getTotalConsumption();
-
+      
       // Get current date
       final now = DateTime.now();
-
+      
       // Create a list to hold daily usage data
       final List<DailyUsage> dailyData = [];
-
+      
       // Get today's predicted energy from overview
-      double todayEnergy = overview.containsKey('today_predicted_energy')
-          ? (overview['today_predicted_energy'] as num).toDouble()
+      double todayEnergy = overview.containsKey('today_predicted_energy') 
+          ? (overview['today_predicted_energy'] as num).toDouble() 
           : 0.0;
-
+      
       // For each day in the past week:
       for (int i = 0; i < 7; i++) {
         final date = now.subtract(Duration(days: i));
         double dailyUsageValue;
-
+        
         if (i == 0) {
           // Use today's prediction
           dailyUsageValue = todayEnergy;
@@ -137,30 +140,30 @@ class AnalyticsService {
           // This is just for demonstration purposes
           dailyUsageValue = todayEnergy * (0.9 + (0.2 * (i % 3)));
         }
-
+        
         // Calculate approximate cost (simplified)
         final cost = dailyUsageValue * 0.15; // Assuming $0.15 per kWh
-
+        
         dailyData.add(DailyUsage(
           date: date,
           usage: dailyUsageValue,
           cost: cost,
         ));
       }
-
+      
       // Calculate weekly usage
       double weeklyUsage = dailyData.fold(0, (sum, item) => sum + item.usage);
-
+      
       // Calculate monthly projection
       double monthlyUsage = weeklyUsage * 4.3; // Approximate month as 4.3 weeks
       double monthlyCost = monthlyUsage * 0.15; // Assuming $0.15 per kWh
-
+      
       // Predicted usage for next month (10% increase)
       double predictedUsage = monthlyUsage * 1.1;
-
+      
       // Calculate cost saving target (10% reduction)
       double costSavingTarget = monthlyCost * 0.9;
-
+      
       return EnergyStats(
         dailyUsage: todayEnergy,
         weeklyUsage: weeklyUsage,
@@ -171,7 +174,8 @@ class AnalyticsService {
         costSavingTarget: costSavingTarget,
       );
     } catch (e) {
-       throw Exception('Failed to compile energy statistics: $e');
+      DevLogs.logError('Failed to compile energy statistics: $e');
+      throw Exception('Failed to compile energy statistics: $e');
     }
   }
 

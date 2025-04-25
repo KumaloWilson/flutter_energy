@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../model/alert.dart';
-import '../service/alerts_service.dart';
+import '../service/alert_service.dart';
 
 class AlertsController extends GetxController {
   final AlertsService _alertsService = AlertsService();
@@ -20,7 +20,13 @@ class AlertsController extends GetxController {
       final data = await _alertsService.getAlerts();
       alerts.value = data;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch alerts');
+      Get.snackbar(
+        'Error',
+        'Failed to fetch alerts',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -31,21 +37,16 @@ class AlertsController extends GetxController {
       await _alertsService.markAsRead(alert.id);
       final index = alerts.indexWhere((a) => a.id == alert.id);
       if (index != -1) {
-        alerts[index] = Alert(
-          id: alert.id,
-          title: alert.title,
-          message: alert.message,
-          type: alert.type,
-          priority: alert.priority,
-          timestamp: alert.timestamp,
-          isRead: true,
-          deviceName: alert.deviceName,
-          actionText: alert.actionText,
-          actionRoute: alert.actionRoute,
-        );
+        alerts[index] = alert.copyWith(isRead: true);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update alert');
+      Get.snackbar(
+        'Error',
+        'Failed to update alert',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
     }
   }
 
@@ -54,7 +55,28 @@ class AlertsController extends GetxController {
       await _alertsService.deleteAlert(alert.id);
       alerts.removeWhere((a) => a.id == alert.id);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete alert');
+      Get.snackbar(
+        'Error',
+        'Failed to delete alert',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
+    }
+  }
+
+  Future<void> markAllAsRead() async {
+    try {
+      await _alertsService.markAllAsRead();
+      alerts.value = alerts.map((alert) => alert.copyWith(isRead: true)).toList();
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to mark all alerts as read',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
     }
   }
 
@@ -76,9 +98,9 @@ class AlertsController extends GetxController {
   IconData getAlertIcon(AlertType type) {
     switch (type) {
       case AlertType.highUsage:
-        return Icons.warning;
+        return Icons.warning_amber_rounded;
       case AlertType.deviceMalfunction:
-        return Icons.error;
+        return Icons.error_outline;
       case AlertType.scheduleReminder:
         return Icons.schedule;
       case AlertType.systemUpdate:
@@ -90,4 +112,3 @@ class AlertsController extends GetxController {
 
   int get unreadCount => alerts.where((alert) => !alert.isRead).length;
 }
-

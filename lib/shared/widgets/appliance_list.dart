@@ -234,4 +234,3 @@ class _ApplianceCardSkeleton extends StatelessWidget {
     );
   }
 }
-
