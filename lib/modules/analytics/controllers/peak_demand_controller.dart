@@ -38,14 +38,17 @@ class PeakDemandController extends GetxController {
       errorMessage.value = '';
 
       final summary = await _analyticsService.getPeakDemandSummary();
-      
+
       // Extract overall peak data
       if (summary.containsKey('overall_peak')) {
         final overallPeak = summary['overall_peak'];
-        
-        overallPeakDemand.value = (overallPeak['demand'] as num).toDouble();
-        overallPeakHour.value = (overallPeak['hour'] as num).toInt();
-        
+
+        final demand = overallPeak['demand'];
+        overallPeakDemand.value = (demand is num) ? demand.toDouble() : 0.0;
+
+        final hour = overallPeak['hour'];
+        overallPeakHour.value = (hour is num) ? hour.toInt() : 0;
+
         if (overallPeak.containsKey('date') && overallPeak['date'] is String) {
           try {
             overallPeakDate.value = DateTime.parse(overallPeak['date']);
@@ -54,13 +57,17 @@ class PeakDemandController extends GetxController {
             overallPeakDate.value = null;
           }
         }
+      } else {
+        overallPeakDemand.value = 0.0;
+        overallPeakHour.value = 0;
+        overallPeakDate.value = null;
       }
-      
+
       // Extract hourly patterns
       if (summary.containsKey('hourly_patterns')) {
         hourlyPatterns.value = summary['hourly_patterns'];
       }
-      
+
       // Fetch data for the selected date
       await fetchPeakDemandForDate();
     } catch (e) {
@@ -71,6 +78,7 @@ class PeakDemandController extends GetxController {
       isLoading.value = false;
     }
   }
+
 
   Future<void> fetchPeakDemandForDate() async {
     try {
