@@ -7,6 +7,7 @@ import 'package:flutter_energy/modules/auth/controllers/auth_controller.dart';
 import 'package:flutter_energy/modules/home/widgets/room_card.dart';
 import 'package:flutter_energy/modules/home/widgets/meter_reading_card.dart';
 import 'package:flutter_energy/routes/app_pages.dart';
+import 'add_appliance_view.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -97,7 +98,7 @@ class HomeView extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             // Content
             SliverToBoxAdapter(
               child: Padding(
@@ -108,14 +109,14 @@ class HomeView extends StatelessWidget {
                     // Meter Reading Card
                     Obx(() => homeController.currentHome.value != null
                         ? MeterReadingCard(
-                            home: homeController.currentHome.value!,
-                            onUpdateReading: (reading) => 
-                                homeController.updateMeterReading(reading),
-                          ).animate().fadeIn().slideY(begin: 0.2, end: 0)
+                      home: homeController.currentHome.value!,
+                      onUpdateReading: (reading) =>
+                          homeController.updateMeterReading(reading),
+                    ).animate().fadeIn().slideY(begin: 0.2, end: 0)
                         : const SizedBox.shrink()),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Rooms Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -131,13 +132,13 @@ class HomeView extends StatelessWidget {
                         ),
                       ],
                     ).animate().fadeIn(delay: 200.ms),
-                    
+
                     const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
-            
+
             // Rooms Grid
             Obx(() {
               if (homeController.isLoading.value && homeController.rooms.isEmpty) {
@@ -145,7 +146,7 @@ class HomeView extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
-              
+
               if (homeController.rooms.isEmpty) {
                 return SliverFillRemaining(
                   child: Center(
@@ -178,7 +179,7 @@ class HomeView extends StatelessWidget {
                   ),
                 );
               }
-              
+
               return SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 sliver: SliverGrid(
@@ -189,10 +190,10 @@ class HomeView extends StatelessWidget {
                     mainAxisSpacing: 16,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                        (context, index) {
                       final room = homeController.rooms[index];
                       final appliances = homeController.appliancesByRoom[room.id] ?? [];
-                      
+
                       return RoomCard(
                         room: room,
                         applianceCount: appliances.length,
@@ -210,12 +211,17 @@ class HomeView extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Get.to(() => const AddApplianceView()),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Appliance'),
+      ),
     );
   }
-  
+
   void _showAddRoomDialog(BuildContext context, HomeController controller) {
     final nameController = TextEditingController();
-    
+
     Get.dialog(
       AlertDialog(
         title: const Text('Add New Room'),

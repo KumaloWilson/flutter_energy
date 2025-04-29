@@ -5,6 +5,7 @@ import 'package:flutter_energy/modules/home/controllers/home_controller.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
 import 'package:flutter_energy/shared/widgets/appliance_card.dart';
 import 'package:flutter_energy/routes/app_pages.dart';
+import 'package:flutter_energy/modules/home/views/add_appliance_view.dart';
 
 class RoomDetailView extends StatelessWidget {
   const RoomDetailView({super.key});
@@ -73,7 +74,6 @@ class RoomDetailView extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: ApplianceCard(
                 reading: appliance,
-                onLongPress: () => _showMoveApplianceDialog(context, controller, appliance),
               ).animate().fadeIn(delay: (index * 100).ms).slideX(),
             );
           },
@@ -83,56 +83,9 @@ class RoomDetailView extends StatelessWidget {
   }
 
   void _showAddApplianceDialog(BuildContext context, HomeController controller) {
-    final nameController = TextEditingController();
-    final powerController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Add New Appliance'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Appliance Name',
-                hintText: 'e.g. TV, Refrigerator',
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: powerController,
-              decoration: const InputDecoration(
-                labelText: 'Rated Power (W)',
-                hintText: 'e.g. 100',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.trim().isNotEmpty &&
-                  powerController.text.trim().isNotEmpty) {
-                controller.addAppliance(
-                  nameController.text.trim(),
-                  powerController.text.trim(),
-                  controller.selectedRoom.value!.id,
-                );
-                Get.back();
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
+    Get.to(() => AddApplianceView(
+      preSelectedRoomId: controller.selectedRoom.value?.id,
+    ));
   }
 
   void _showMoveApplianceDialog(
@@ -157,7 +110,7 @@ class RoomDetailView extends StatelessWidget {
                   if (room.id == controller.selectedRoom.value!.id) {
                     return const SizedBox.shrink();
                   }
-                  
+
                   return ListTile(
                     title: Text(room.name),
                     leading: const Icon(Icons.home_outlined),

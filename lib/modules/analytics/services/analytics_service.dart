@@ -1,13 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_energy/modules/analytics/models/energy_stats.dart';
-import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utilities/logger.dart';
 
 class AnalyticsService {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'https://test.kingsmansoftwares.co.zw/api',
+    baseUrl: 'http://192.168.0.178:5000/api',
     connectTimeout: const Duration(seconds: 30),
     receiveTimeout: const Duration(seconds: 30),
   ));

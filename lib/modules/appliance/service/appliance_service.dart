@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../dashboard/models/appliance_reading.dart';
 
 
+
 class ApplianceService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://sereneinv.co.zw/minimeter/',
@@ -61,6 +62,36 @@ class ApplianceService {
     // API implementation would go here
     // Since this endpoint isn't provided, we'll simulate it
     await Future.delayed(const Duration(seconds: 1));
+  }
+
+  // Add this new method to call the API endpoint for adding a device
+  Future<bool> addDevice({
+    required String name,
+    required String ratedPower,
+    required String roomId,
+    required String homeId,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'add-device',
+        data: {
+          'name': name,
+          'rated_power': ratedPower,
+          'room_id': roomId,
+          'home_id': homeId,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw Exception('Failed to add device: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to add device');
+    } catch (e) {
+      throw Exception('Unexpected error while adding device: $e');
+    }
   }
 
   // Handle Dio errors with more specific messages

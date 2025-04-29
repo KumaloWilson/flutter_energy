@@ -5,23 +5,25 @@ import 'package:get/get.dart';
 
 class ApplianceCard extends StatelessWidget {
   final ApplianceReading reading;
-  final VoidCallback? onLongPress; // Add this parameter
+  final VoidCallback? onLongPress;
 
   const ApplianceCard({
     super.key,
     required this.reading,
-    this.onLongPress, // Make it optional
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () => Get.toNamed(
           Routes.APPLIANCE_DETAIL,
           arguments: reading,
         ),
-        onLongPress: onLongPress, // Add this line
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -31,21 +33,25 @@ class ApplianceCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        reading.applianceInfo.appliance,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          reading.applianceInfo.appliance,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Rated Power: ${reading.applianceInfo.ratedPower}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          'Rated Power: ${reading.applianceInfo.ratedPower}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
