@@ -1,220 +1,220 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_energy/modules/home/controllers/home_controller.dart';
-import 'package:flutter_energy/modules/auth/controllers/auth_controller.dart';
+import 'package:flutter_energy/modules/home/views/room_detail_view.dart';
 import 'package:flutter_energy/modules/home/widgets/room_card.dart';
 import 'package:flutter_energy/modules/home/widgets/meter_reading_card.dart';
-import 'package:flutter_energy/routes/app_pages.dart';
-import 'add_appliance_view.dart';
 
 class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+  const HomeView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final homeController = Get.put(HomeController());
-    final authController = Get.find<AuthController>();
-    final colorScheme = Theme.of(context).colorScheme;
+    final HomeController controller = Get.find<HomeController>();
 
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await homeController.fetchHomeData();
-          await homeController.fetchRooms();
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // App Bar with User Greeting
-            SliverAppBar(
-              expandedHeight: 180,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        colorScheme.primary,
-                        colorScheme.primaryContainer,
-                      ],
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 8),
-                          // Date
-                          Text(
-                            DateFormat('MMMM d, yyyy').format(DateTime.now()),
-                            style: TextStyle(
-                              color: colorScheme.onPrimary.withOpacity(0.8),
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Greeting
-                          Obx(() => Text(
-                            'Welcome, ${authController.currentUser.value?.name ?? 'User'}!',
-                            style: TextStyle(
-                              color: colorScheme.onPrimary,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )),
-                        ],
-                      ),
-                    ),
-                  ),
+      appBar: AppBar(
+        title: const Text('My Home'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => controller.fetchDevices(),
+          ),
+        ],
+      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.hasError.value) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${controller.errorMessage.value}',
+                  style: const TextStyle(color: Colors.red),
                 ),
-                titlePadding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                title: Text(
-                  'Home',
-                  style: TextStyle(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () => Get.toNamed(Routes.ALERTS),
-                  tooltip: 'Notifications',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.person_outline),
-                  onPressed: () => Get.toNamed(Routes.SETTINGS),
-                  tooltip: 'Profile',
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => controller.fetchHomeData(),
+                  child: const Text('Retry'),
                 ),
               ],
             ),
+          );
+        }
 
-            // Content
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Meter Reading Card
-                    Obx(() => homeController.currentHome.value != null
-                        ? MeterReadingCard(
-                      home: homeController.currentHome.value!,
-                      onUpdateReading: (reading) =>
-                          homeController.updateMeterReading(reading),
-                    ).animate().fadeIn().slideY(begin: 0.2, end: 0)
-                        : const SizedBox.shrink()),
-
-                    const SizedBox(height: 24),
-
-                    // Rooms Section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Rooms',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _showAddRoomDialog(context, homeController),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Room'),
-                        ),
-                      ],
-                    ).animate().fadeIn(delay: 200.ms),
-
-                    const SizedBox(height: 16),
-                  ],
+        return RefreshIndicator(
+          onRefresh: () => controller.fetchHomeData(),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Meter Reading Card
+              if (controller.currentHome.value != null)
+                MeterReadingCard(
+                  currentReading: controller.currentHome.value!.currentReading,
+                  lastUpdated: controller.currentHome.value!.lastUpdated,
+                  onUpdateReading: (reading) => controller.updateMeterReading(reading),
                 ),
-              ),
-            ),
 
-            // Rooms Grid
-            Obx(() {
-              if (homeController.isLoading.value && homeController.rooms.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
+              const SizedBox(height: 24),
 
-              if (homeController.rooms.isEmpty) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.home_outlined,
-                          size: 64,
-                          color: colorScheme.primary.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No rooms added yet',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Add rooms to organize your appliances',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: () => _showAddRoomDialog(context, homeController),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Room'),
-                        ),
-                      ],
+              // Rooms Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Rooms',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                );
-              }
+                  TextButton.icon(
+                    onPressed: () => _showAddRoomDialog(context, controller),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Room'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-              return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                sliver: SliverGrid(
+              if (controller.rooms.isEmpty)
+                Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.room,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.primary.withAlpha(150),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No rooms added yet',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add rooms to organize your appliances',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 1.2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
+                    childAspectRatio: 1.2,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      final room = homeController.rooms[index];
-                      final appliances = homeController.appliancesByRoom[room.id] ?? [];
+                  itemCount: controller.rooms.length,
+                  itemBuilder: (context, index) {
+                    final room = controller.rooms[index];
+                    final devices = controller.devicesByRoom[room.id] ?? [];
 
-                      return RoomCard(
-                        room: room,
-                        applianceCount: appliances.length,
-                        onTap: () {
-                          homeController.selectRoom(room);
-                          Get.toNamed(Routes.ROOM_DETAIL);
-                        },
-                      ).animate().fadeIn(delay: (300 + (index * 100)).ms).scale();
-                    },
-                    childCount: homeController.rooms.length,
+                    return RoomCard(
+                      room: room,
+                      deviceCount: devices.length,
+                      onTap: () => Get.to(() => RoomDetailView(room: room)),
+                    );
+                  },
+                ),
+
+              const SizedBox(height: 24),
+
+              // Quick Actions Section
+              Text(
+                'Quick Actions',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildQuickActionButton(
+                        context,
+                        'Add New Appliance',
+                        Icons.add_circle,
+                            () => Get.toNamed('/add-appliance'),
+                      ),
+                      const Divider(height: 32),
+                      _buildQuickActionButton(
+                        context,
+                        'View Energy Analytics',
+                        Icons.analytics,
+                            () => Get.toNamed('/analytics'),
+                      ),
+                      const Divider(height: 32),
+                      _buildQuickActionButton(
+                        context,
+                        'Energy Saving Tips',
+                        Icons.lightbulb,
+                            () => Get.toNamed('/tips'),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }),
-          ],
-        ),
-      ),
+              ),
+            ],
+          ),
+        );
+      }),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.to(() => const AddApplianceView()),
+        onPressed: () => Get.toNamed('/add-appliance'),
         icon: const Icon(Icons.add),
         label: const Text('Add Appliance'),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(
+      BuildContext context,
+      String label,
+      IconData icon,
+      VoidCallback onPressed,
+      ) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: Theme.of(context).colorScheme.primary,
+              size: 28,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const Spacer(),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -225,29 +225,43 @@ class HomeView extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         title: const Text('Add New Room'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Room Name',
-                hintText: 'e.g. Living Room, Kitchen',
-              ),
-              autofocus: true,
-            ),
-          ],
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Room Name',
+            hintText: 'e.g., Living Room, Kitchen',
+          ),
+          autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.trim().isNotEmpty) {
-                controller.addRoom(nameController.text.trim());
+          TextButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isNotEmpty) {
+                final success = await controller.addRoom(name);
                 Get.back();
+
+                if (success) {
+                  Get.snackbar(
+                    'Success',
+                    'Room added successfully',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.green.withAlpha(200),
+                    colorText: Colors.white,
+                  );
+                } else {
+                  Get.snackbar(
+                    'Error',
+                    controller.errorMessage.value,
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red.withAlpha(200),
+                    colorText: Colors.white,
+                  );
+                }
               }
             },
             child: const Text('Add'),

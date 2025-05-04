@@ -49,7 +49,7 @@ class ApplianceList extends StatelessWidget {
                               ),
                               child: Icon(
                                 _getApplianceIcon(
-                                  reading.applianceInfo.appliance,
+                                  reading.id.toString(),
                                 ),
                                 color: Theme.of(context).colorScheme.primary,
                               ),
@@ -60,7 +60,7 @@ class ApplianceList extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    reading.applianceInfo.appliance,
+                                    reading.id.toString(),
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -69,7 +69,7 @@ class ApplianceList extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    'Rated Power: ${reading.applianceInfo.ratedPower}',
+                                    'Rated Power: ${reading.id}',
                                     style: Theme.of(context).textTheme.bodySmall,
                                   ),
                                 ],
@@ -181,7 +181,7 @@ class _ApplianceCardSkeleton extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -195,7 +195,7 @@ class _ApplianceCardSkeleton extends StatelessWidget {
                           height: 20,
                           decoration: BoxDecoration(
                             color:
-                            Theme.of(context).colorScheme.surfaceVariant,
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -205,7 +205,7 @@ class _ApplianceCardSkeleton extends StatelessWidget {
                           height: 16,
                           decoration: BoxDecoration(
                             color:
-                            Theme.of(context).colorScheme.surfaceVariant,
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -218,7 +218,7 @@ class _ApplianceCardSkeleton extends StatelessWidget {
               Container(
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -230,7 +230,7 @@ class _ApplianceCardSkeleton extends StatelessWidget {
       onPlay: (controller) => controller.repeat(),
     ).shimmer(
       duration: 1500.ms,
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.1),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1),
     );
   }
 }

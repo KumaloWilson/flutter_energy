@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_energy/core/utilities/logger.dart';
 import 'package:flutter_energy/modules/auth/controllers/auth_controller.dart';
 import 'package:flutter_energy/modules/home/models/room_model.dart';
 import 'package:flutter_energy/modules/home/models/home_model.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
+import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
 
-import '../../appliance/service/appliance_service.dart';
+import '../service/firestore_service.dart';
+
 class HomeController extends GetxController {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AuthController _authController = Get.find<AuthController>();
+  final ApiService _apiService = Get.find<ApiService>();
+  final FirestoreService _firestoreService = Get.find<FirestoreService>();
 
   final RxBool isLoading = false.obs;
   final RxBool hasError = false.obs;
@@ -18,15 +20,18 @@ class HomeController extends GetxController {
 
   final Rx<HomeModel?> currentHome = Rx<HomeModel?>(null);
   final RxList<RoomModel> rooms = <RoomModel>[].obs;
-  final RxMap<String, List<ApplianceReading>> appliancesByRoom = <String, List<ApplianceReading>>{}.obs;
+  final RxMap<String, List<ApplianceInfo>> devicesByRoom = <String, List<ApplianceInfo>>{}.obs;
 
   final Rx<RoomModel?> selectedRoom = Rx<RoomModel?>(null);
+  final RxList<ApplianceInfo> allDevices = <ApplianceInfo>[].obs;
+
+  // For device control
+  final RxMap<int, bool> deviceControlLoading = <int, bool>{}.obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchHomeData();
-    fetchRooms();
   }
 
   Future<void> fetchHomeData() async {
@@ -41,15 +46,34 @@ class HomeController extends GetxController {
         return;
       }
 
-      final homeId = _authController.currentUser.value!.homeId;
-      final homeDoc = await _firestore.collection('homes').doc(homeId).get();
+      // Get home data from Firestore
+      final userId = _authController.currentUser.value!.id;
+      final homeData = await _firestoreService.getUserHome(userId);
 
-      if (homeDoc.exists) {
-        currentHome.value = HomeModel.fromMap(homeDoc.data()!, homeDoc.id);
+      if (homeData != null) {
+        currentHome.value = homeData;
       } else {
-        hasError.value = true;
-        errorMessage.value = 'Home not found';
+        // Create default home if none exists
+        final newHome = HomeModel(
+          id: await _firestoreService.createHome(
+            userId: userId,
+            name: 'My Home',
+            meterNumber: '12345',
+          ),
+          name: 'My Home',
+          meterNumber: '12345',
+          currentReading: 0.0,
+          createdAt: DateTime.now(),
+        );
+        currentHome.value = newHome;
       }
+
+      // Fetch rooms from Firestore
+      await fetchRooms();
+
+      // Fetch devices from API
+      await fetchDevices();
+
     } catch (e) {
       hasError.value = true;
       errorMessage.value = 'Failed to load home data';
@@ -61,24 +85,23 @@ class HomeController extends GetxController {
 
   Future<void> fetchRooms() async {
     try {
-      isLoading.value = true;
+      if (currentHome.value == null) return;
 
-      if (_authController.currentUser.value == null) return;
+      final homeId = currentHome.value!.id;
+      final roomsList = await _firestoreService.getRooms(homeId);
 
-      final homeId = _authController.currentUser.value!.homeId;
-      final roomsSnapshot = await _firestore
-          .collection('rooms')
-          .where('homeId', isEqualTo: homeId)
-          .orderBy('name')
-          .get();
+      if (roomsList.isEmpty) {
+        // Create default rooms if none exist
+        final defaultRooms = [
+          await _firestoreService.createRoom(homeId: homeId, name: 'Living Room'),
+          await _firestoreService.createRoom(homeId: homeId, name: 'Kitchen'),
+          await _firestoreService.createRoom(homeId: homeId, name: 'Bedroom'),
+          await _firestoreService.createRoom(homeId: homeId, name: 'Bathroom'),
+        ];
 
-      rooms.value = roomsSnapshot.docs
-          .map((doc) => RoomModel.fromMap(doc.data(), doc.id))
-          .toList();
-
-      // Fetch appliances for each room
-      for (final room in rooms) {
-        await fetchAppliancesForRoom(room.id);
+        rooms.value = defaultRooms;
+      } else {
+        rooms.value = roomsList;
       }
 
       // Select first room by default if available
@@ -87,44 +110,70 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       DevLogs.logError('Error fetching rooms: $e');
-    } finally {
-      isLoading.value = false;
+      // Don't set hasError here to allow partial data loading
     }
   }
 
-  Future<void> fetchAppliancesForRoom(String roomId) async {
+  Future<void> fetchDevices() async {
     try {
-      final appliancesSnapshot = await _firestore
-          .collection('appliances')
-          .where('roomId', isEqualTo: roomId)
-          .get();
+      // Get all registered devices from API
+      final devices = await _apiService.getRegisteredDevices();
+      allDevices.value = devices;
 
-      final appliances = appliancesSnapshot.docs
-          .map((doc) {
-        final data = doc.data();
-        final applianceInfo = ApplianceInfo(
-          id: int.parse(doc.id),
-          appliance: data['name'] ?? '',
-          ratedPower: data['ratedPower'] ?? '0 W',
-          dateAdded: (data['createdAt'] as Timestamp).toDate(),
-        );
+      if (currentHome.value == null) return;
 
-        return ApplianceReading(
-          id: int.parse(doc.id),
-          applianceInfo: applianceInfo,
-          voltage: data['voltage'] ?? '0',
-          current: data['current'] ?? '0',
-          timeOn: data['timeOn'] ?? '0',
-          activeEnergy: data['activeEnergy'] ?? '0',
-          readingTimeStamp: (data['lastReading'] as Timestamp).toDate(),
-        );
-      })
-          .toList();
+      // Get device-room mappings from Firestore
+      final homeId = currentHome.value!.id;
+      final deviceRoomMappings = await _firestoreService.getDeviceRoomMappings(homeId);
 
-      appliancesByRoom[roomId] = appliances;
+      // Organize devices by room based on Firestore mappings
+      final Map<String, List<ApplianceInfo>> roomDevices = {};
+
+      for (final room in rooms) {
+        roomDevices[room.id] = [];
+      }
+
+      // First, assign devices based on Firestore mappings
+      for (final device in devices) {
+        final deviceId = device.id.toString();
+        final roomId = deviceRoomMappings[deviceId];
+
+        if (roomId != null && roomDevices.containsKey(roomId)) {
+          roomDevices[roomId]!.add(device);
+        } else {
+          // If device not mapped to a room, assign to default room
+          final defaultRoomId = rooms.isNotEmpty ? rooms.first.id : '';
+          if (defaultRoomId.isNotEmpty) {
+            roomDevices[defaultRoomId]!.add(device);
+
+            // Update mapping in Firestore
+            await _firestoreService.assignDeviceToRoom(
+              homeId: homeId,
+              deviceId: deviceId,
+              roomId: defaultRoomId,
+              deviceName: device.appliance,
+              deviceType: _determineDeviceType(device.appliance),
+              meterNumber: device.meterNumber,
+            );
+          }
+        }
+      }
+
+      devicesByRoom.value = roomDevices;
     } catch (e) {
-      DevLogs.logError('Error fetching appliances for room $roomId: $e');
+      DevLogs.logError('Error fetching devices: $e');
     }
+  }
+
+  String _determineDeviceType(String deviceName) {
+    final name = deviceName.toLowerCase();
+    if (name.contains('light') || name.contains('lamp')) return 'lighting';
+    if (name.contains('tv') || name.contains('television')) return 'entertainment';
+    if (name.contains('fridge') || name.contains('refrigerator')) return 'refrigeration';
+    if (name.contains('ac') || name.contains('air')) return 'cooling';
+    if (name.contains('heater')) return 'heating';
+    if (name.contains('oven') || name.contains('stove')) return 'cooking';
+    return 'other';
   }
 
   void selectRoom(RoomModel room) {
@@ -135,34 +184,28 @@ class HomeController extends GetxController {
     try {
       isLoading.value = true;
 
-      if (_authController.currentUser.value == null) return false;
-
-      final homeId = _authController.currentUser.value!.homeId;
+      if (currentHome.value == null) {
+        errorMessage.value = 'No home selected';
+        return false;
+      }
 
       // Check if room with same name exists
-      final existingRooms = await _firestore
-          .collection('rooms')
-          .where('homeId', isEqualTo: homeId)
-          .where('name', isEqualTo: name)
-          .get();
-
-      if (existingRooms.docs.isNotEmpty) {
+      if (rooms.any((room) => room.name.toLowerCase() == name.toLowerCase())) {
         errorMessage.value = 'A room with this name already exists';
         return false;
       }
 
-      // Add new room
-      final roomRef = await _firestore.collection('rooms').add({
-        'name': name,
-        'homeId': homeId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      // Add room to Firestore
+      final homeId = currentHome.value!.id;
+      final newRoom = await _firestoreService.createRoom(
+        homeId: homeId,
+        name: name,
+      );
 
-      // Refresh rooms list
-      await fetchRooms();
+      rooms.add(newRoom);
+      devicesByRoom[newRoom.id] = [];
 
       // Select the newly created room
-      final newRoom = rooms.firstWhere((room) => room.id == roomRef.id);
       selectRoom(newRoom);
 
       return true;
@@ -181,13 +224,21 @@ class HomeController extends GetxController {
 
       if (currentHome.value == null) return false;
 
-      await _firestore.collection('homes').doc(currentHome.value!.id).update({
-        'currentReading': reading,
-        'lastUpdated': FieldValue.serverTimestamp(),
-      });
+      // Update meter reading in Firestore
+      await _firestoreService.updateMeterReading(
+        homeId: currentHome.value!.id,
+        reading: reading,
+      );
 
-      // Refresh home data
-      await fetchHomeData();
+      // Update the current home model
+      currentHome.value = HomeModel(
+        id: currentHome.value!.id,
+        name: currentHome.value!.name,
+        meterNumber: currentHome.value!.meterNumber,
+        currentReading: reading,
+        createdAt: currentHome.value!.createdAt,
+        lastUpdated: DateTime.now(),
+      );
 
       return true;
     } catch (e) {
@@ -199,26 +250,20 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<bool> addAppliance(String name, String ratedPower, String roomId) async {
+  Future<bool> addAppliance(String name, String ratedPower, String meterNumber) async {
     try {
       isLoading.value = true;
 
-      if (_authController.currentUser.value == null) return false;
-
-      final homeId = _authController.currentUser.value!.homeId;
-
       // Call the API to add the device
-      final applianceService = Get.find<ApplianceService>();
-      final success = await applianceService.addDevice(
+      final success = await _apiService.addDevice(
         name: name,
         ratedPower: ratedPower,
-        roomId: roomId,
-        homeId: homeId,
+        meterNumber: meterNumber,
       );
 
       if (success) {
-        // Refresh appliances for this room
-        await fetchAppliancesForRoom(roomId);
+        // Refresh devices list
+        await fetchDevices();
 
         Get.snackbar(
           'Success',
@@ -251,30 +296,151 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<bool> moveApplianceToRoom(String applianceId, String newRoomId) async {
+  Future<bool> assignDeviceToRoom(int deviceId, String roomId) async {
     try {
       isLoading.value = true;
 
-      await _firestore.collection('appliances').doc(applianceId).update({
-        'roomId': newRoomId,
-      });
+      if (currentHome.value == null) return false;
 
-      // Refresh appliances for both rooms
-      final oldRoomId = appliancesByRoom.entries
-          .firstWhere((entry) => entry.value.any((a) => a.id.toString() == applianceId))
-          .key;
+      // Find the device in all devices
+      final device = allDevices.firstWhereOrNull((d) => d.id == deviceId);
+      if (device == null) return false;
 
-      await fetchAppliancesForRoom(oldRoomId);
-      await fetchAppliancesForRoom(newRoomId);
+      // Update mapping in Firestore
+      await _firestoreService.assignDeviceToRoom(
+        homeId: currentHome.value!.id,
+        deviceId: deviceId.toString(),
+        roomId: roomId,
+        deviceName: device.appliance,
+        deviceType: _determineDeviceType(device.appliance),
+        meterNumber: device.meterNumber,
+      );
+
+      // Remove from current room if it exists in any
+      for (final entry in devicesByRoom.entries) {
+        final roomDevices = entry.value;
+        final deviceIndex = roomDevices.indexWhere((d) => d.id == deviceId);
+
+        if (deviceIndex >= 0) {
+          roomDevices.removeAt(deviceIndex);
+        }
+      }
+
+      // Add to new room
+      if (!devicesByRoom.containsKey(roomId)) {
+        devicesByRoom[roomId] = [];
+      }
+
+      devicesByRoom[roomId]!.add(device);
+
+      // Update the UI
+      devicesByRoom.refresh();
 
       return true;
     } catch (e) {
-      errorMessage.value = 'Failed to move appliance';
-      DevLogs.logError('Error moving appliance: $e');
+      errorMessage.value = 'Failed to assign device to room';
+      DevLogs.logError('Error assigning device to room: $e');
       return false;
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // Toggle device on/off
+  Future<bool> toggleDevice(ApplianceInfo device) async {
+    try {
+      // Set loading state for this device
+      deviceControlLoading[device.id] = true;
+
+      final isCurrentlyOn = device.relayStatus == 'ON';
+      final meterNumber = device.meterNumber;
+
+      if (meterNumber.isEmpty) {
+        throw Exception('Device has no meter number');
+      }
+
+      bool success;
+      if (isCurrentlyOn) {
+        // Turn off
+        success = await _apiService.turnDeviceOff(meterNumber);
+      } else {
+        // Turn on
+        success = await _apiService.turnDeviceOn(meterNumber);
+      }
+
+      if (success) {
+        // Update the device status locally
+        final index = allDevices.indexWhere((d) => d.id == device.id);
+        if (index >= 0) {
+          final updatedDevice = ApplianceInfo(
+            id: device.id,
+            appliance: device.appliance,
+            ratedPower: device.ratedPower,
+            dateAdded: device.dateAdded,
+            meterNumber: device.meterNumber,
+            relayStatus: isCurrentlyOn ? 'OFF' : 'ON',
+          );
+
+          allDevices[index] = updatedDevice;
+
+          // Update in room devices
+          for (final roomId in devicesByRoom.keys) {
+            final roomDevices = devicesByRoom[roomId]!;
+            final deviceIndex = roomDevices.indexWhere((d) => d.id == device.id);
+
+            if (deviceIndex >= 0) {
+              roomDevices[deviceIndex] = updatedDevice;
+            }
+          }
+
+          // Update device status in Firestore
+          if (currentHome.value != null) {
+            await _firestoreService.updateDeviceStatus(
+              homeId: currentHome.value!.id,
+              deviceId: device.id.toString(),
+              isActive: !isCurrentlyOn,
+            );
+          }
+        }
+
+        // Show success message
+        Get.snackbar(
+          'Success',
+          'Device ${isCurrentlyOn ? 'turned off' : 'turned on'} successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+
+        return true;
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to toggle device',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    } catch (e) {
+      DevLogs.logError('Failed to toggle device: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to toggle device: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      deviceControlLoading[device.id] = false;
+    }
+  }
+
+  // Check if a device is currently being controlled
+  bool isDeviceControlLoading(int deviceId) {
+    return deviceControlLoading[deviceId] ?? false;
   }
 
   // Add this method to get the list of rooms for dropdown selection

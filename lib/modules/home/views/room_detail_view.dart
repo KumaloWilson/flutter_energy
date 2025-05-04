@@ -1,139 +1,250 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_energy/modules/home/models/appliance_model.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_energy/modules/home/controllers/home_controller.dart';
-import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
+import 'package:flutter_energy/modules/home/models/room_model.dart';
 import 'package:flutter_energy/shared/widgets/appliance_card.dart';
-import 'package:flutter_energy/routes/app_pages.dart';
-import 'package:flutter_energy/modules/home/views/add_appliance_view.dart';
 
 class RoomDetailView extends StatelessWidget {
-  const RoomDetailView({super.key});
+  final RoomModel room;
+
+  const RoomDetailView({super.key, required this.room});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<HomeController>();
-    final colorScheme = Theme.of(context).colorScheme;
+    final HomeController controller = Get.find<HomeController>();
 
     return Scaffold(
       appBar: AppBar(
-        title: Obx(() => Text(controller.selectedRoom.value?.name ?? 'Room')),
+        title: Text(room.name),
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddApplianceDialog(context, controller),
-            tooltip: 'Add Appliance',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => controller.fetchDevices(),
+            tooltip: 'Refresh Devices',
           ),
         ],
       ),
       body: Obx(() {
-        if (controller.selectedRoom.value == null) {
-          return const Center(child: Text('No room selected'));
+        final devices = controller.devicesByRoom[room.id] ?? [];
+
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        final roomId = controller.selectedRoom.value!.id;
-        final appliances = controller.appliancesByRoom[roomId] ?? [];
-
-        if (appliances.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        return RefreshIndicator(
+          onRefresh: () => controller.fetchDevices(),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: devices.isEmpty
+                ? _buildEmptyState(context)
+                : ListView(
               children: [
-                Icon(
-                  Icons.electrical_services_outlined,
-                  size: 64,
-                  color: colorScheme.primary.withOpacity(0.5),
+                // Room Stats Card
+                _buildRoomStatsCard(context, devices),
+
+                const SizedBox(height: 24),
+
+                // Devices Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Devices',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => Get.toNamed('/add-appliance', arguments: {'roomId': room.id}),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Device'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'No appliances in this room',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Add appliances to monitor energy usage',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => _showAddApplianceDialog(context, controller),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Appliance'),
-                ),
+
+                // Devices List
+                ...devices.map((device) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ApplianceCard(
+                    appliance: ApplianceModel(
+                        id: device.id.toString(),
+                        name: device.appliance,
+                        type: "Type",
+                        wattage: double.parse(device.ratedPower),
+                        roomId: "roomid",
+                        meterNumber: "meterNumber",
+                        createdAt: DateTime.now()
+                    ),
+                    onTap: () => Get.toNamed('/appliance-details', arguments: {'appliance': device}),
+                    onToggle: (_) => _toggleDevice(controller, device),
+                    showDetails: true,
+                  ),
+                )).toList(),
               ],
             ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: appliances.length,
-          itemBuilder: (context, index) {
-            final appliance = appliances[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: ApplianceCard(
-                reading: appliance,
-              ).animate().fadeIn(delay: (index * 100).ms).slideX(),
-            );
-          },
+          ),
         );
       }),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Get.toNamed('/add-appliance', arguments: {'roomId': room.id}),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Device'),
+      ),
     );
   }
 
-  void _showAddApplianceDialog(BuildContext context, HomeController controller) {
-    Get.to(() => AddApplianceView(
-      preSelectedRoomId: controller.selectedRoom.value?.id,
-    ));
-  }
-
-  void _showMoveApplianceDialog(
-      BuildContext context, HomeController controller, ApplianceReading appliance) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Move Appliance'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Select a room to move "${appliance.applianceInfo.appliance}"'),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: Obx(() => ListView.builder(
-                shrinkWrap: true,
-                itemCount: controller.rooms.length,
-                itemBuilder: (context, index) {
-                  final room = controller.rooms[index];
-                  // Skip current room
-                  if (room.id == controller.selectedRoom.value!.id) {
-                    return const SizedBox.shrink();
-                  }
-
-                  return ListTile(
-                    title: Text(room.name),
-                    leading: const Icon(Icons.home_outlined),
-                    onTap: () {
-                      controller.moveApplianceToRoom(
-                        appliance.id.toString(),
-                        room.id,
-                      );
-                      Get.back();
-                    },
-                  );
-                },
-              )),
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.devices_other,
+            size: 72,
+            color: Theme.of(context).colorScheme.primary.withAlpha(150),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No devices in this room',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add devices to monitor energy usage',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => Get.toNamed('/add-appliance', arguments: {'roomId': room.id}),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Device'),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildRoomStatsCard(BuildContext context, List devices) {
+    // Calculate total power consumption
+    double totalConsumption = 0;
+    int activeDevices = 0;
+
+    for (final device in devices) {
+      if (device.currentReading != null) {
+        totalConsumption += device.currentReading;
+      }
+      if (device.isActive) {
+        activeDevices++;
+      }
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Room Statistics',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem(
+                  context,
+                  'Total Devices',
+                  devices.length.toString(),
+                  Icons.devices,
+                ),
+                _buildStatItem(
+                  context,
+                  'Active Devices',
+                  activeDevices.toString(),
+                  Icons.power,
+                  activeDevices > 0 ? Theme.of(context).colorScheme.primary : null,
+                ),
+                _buildStatItem(
+                  context,
+                  'Total Usage',
+                  '${totalConsumption.toStringAsFixed(1)} kWh',
+                  Icons.show_chart,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+      BuildContext context,
+      String label,
+      String value,
+      IconData icon, [
+        Color? color,
+      ]) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: color ?? Theme.of(context).colorScheme.primary.withAlpha(180),
+          size: 24,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(180),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _toggleDevice(HomeController controller, dynamic device) {
+    // controller.toggleDeviceStatus(device).then((success) {
+    //   if (success) {
+    //     Get.snackbar(
+    //       device.isActive ? 'Device Turned Off' : 'Device Turned On',
+    //       device.isActive
+    //           ? '${device.name} has been turned off'
+    //           : '${device.name} has been turned on',
+    //       snackPosition: SnackPosition.BOTTOM,
+    //       backgroundColor: device.isActive
+    //           ? Colors.blueGrey.withAlpha(150)
+    //           : Colors.green.withAlpha(150),
+    //       colorText: Colors.white,
+    //       duration: const Duration(seconds: 2),
+    //     );
+    //   } else {
+    //     Get.snackbar(
+    //       'Error',
+    //       'Failed to toggle device: ${controller.errorMessage.value}',
+    //       snackPosition: SnackPosition.BOTTOM,
+    //       backgroundColor: Colors.red.withAlpha(150),
+    //       colorText: Colors.white,
+    //     );
+    //   }
+    // });
   }
 }

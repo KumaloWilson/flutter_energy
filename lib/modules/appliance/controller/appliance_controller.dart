@@ -1,15 +1,15 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../dashboard/models/appliance_reading.dart';
+import '../../dashboard/services/api_service.dart';
 import '../service/appliance_service.dart';
-
 
 class ApplianceController extends GetxController {
   final ApplianceService _applianceService = ApplianceService();
+  final ApiService _apiService = Get.find<ApiService>();
   final RxBool isLoading = true.obs;
+  final RxBool isControlLoading = false.obs;
 
   // Main appliance data
   final Rx<ApplianceReading> appliance = ApplianceReading(
@@ -66,7 +66,18 @@ class ApplianceController extends GetxController {
       if (readings.isNotEmpty) {
         // Update the appliance with the latest reading
         readings.sort((a, b) => b.readingTimeStamp.compareTo(a.readingTimeStamp));
-        appliance.value = readings.first;
+
+        // Preserve the appliance info but update the reading data
+        final latestReading = readings.first;
+        appliance.value = ApplianceReading(
+          id: appliance.value.id,
+          applianceInfo: appliance.value.applianceInfo,
+          voltage: latestReading.voltage,
+          current: latestReading.current,
+          timeOn: latestReading.timeOn,
+          activeEnergy: latestReading.activeEnergy,
+          readingTimeStamp: latestReading.readingTimeStamp,
+        );
 
         // Process reading data into timeline and power chart data
         _processApplianceReadings(readings);
@@ -250,6 +261,76 @@ class ApplianceController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Toggle device on/off
+  Future<void> toggleDeviceState() async {
+    try {
+      isControlLoading.value = true;
+
+      final device = appliance.value.applianceInfo;
+      final isCurrentlyOn = device.relayStatus == 'ON';
+      final meterNumber = device.meterNumber;
+
+      if (meterNumber.isEmpty) {
+        throw Exception('Device has no meter number');
+      }
+
+      bool success;
+      if (isCurrentlyOn) {
+        // Turn off
+        success = await _apiService.turnDeviceOff(meterNumber);
+      } else {
+        // Turn on
+        success = await _apiService.turnDeviceOn(meterNumber);
+      }
+
+      if (success) {
+        // Update the device status locally
+        final updatedDevice = ApplianceInfo(
+          id: device.id,
+          appliance: device.appliance,
+          ratedPower: device.ratedPower,
+          dateAdded: device.dateAdded,
+          meterNumber: device.meterNumber,
+          relayStatus: isCurrentlyOn ? 'OFF' : 'ON',
+        );
+
+        // Update the appliance info
+        appliance.update((val) {
+          if (val != null) {
+            val.applianceInfo = updatedDevice;
+          }
+        });
+
+        // Show success message
+        Get.snackbar(
+          'Success',
+          'Device ${isCurrentlyOn ? 'turned off' : 'turned on'} successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to toggle device',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to toggle device: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    } finally {
+      isControlLoading.value = false;
     }
   }
 

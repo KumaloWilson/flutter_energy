@@ -14,7 +14,7 @@ class EnergyService {
 
       // For each device, get its readings
       for (var device in devices) {
-        final readings = await _apiService.getDeviceReadings(device.id);
+        final readings = await _apiService.getDeviceRecords(device.id);
         if (readings.isNotEmpty) {
           allReadings.addAll(readings);
         }
@@ -32,15 +32,8 @@ class EnergyService {
       final devices = await _apiService.getRegisteredDevices();
 
       // Create a list to store the last reading of each device
-      List<ApplianceReading> lastReadings = [];
+      List<ApplianceReading> lastReadings = await _apiService.getLastReadings();
 
-      // For each device, get its last reading
-      for (var device in devices) {
-        final lastReading = await _apiService.getLastReadingForDevice(device.id);
-        if (lastReading != null) {
-          lastReadings.add(lastReading);
-        }
-      }
 
       return lastReadings;
     } catch (e) {

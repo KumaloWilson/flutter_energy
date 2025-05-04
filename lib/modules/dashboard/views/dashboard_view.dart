@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_energy/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:flutter_energy/shared/widgets/energy_card.dart';
-import 'package:flutter_energy/shared/widgets/appliance_card.dart';
-
+import '../../../shared/widgets/device_control_card.dart';
 import '../../../shared/widgets/quick_actions.dart';
 import '../../../shared/widgets/usage_chart.dart';
 
@@ -21,10 +20,7 @@ class DashboardView extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              controller.fetchLastReadings();
-              controller.fetchMonthlyConsumption();
-            },
+            onPressed: () => controller.refreshDashboard(),
           ),
         ],
       ),
@@ -42,10 +38,7 @@ class DashboardView extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () async {
-            await controller.fetchLastReadings();
-            await controller.fetchMonthlyConsumption();
-          },
+          onRefresh: () => controller.refreshDashboard(),
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -69,9 +62,24 @@ class DashboardView extends StatelessWidget {
                       const SizedBox(height: 16),
                       const UsageChart().animate().fadeIn(delay: 400.ms),
                       const SizedBox(height: 24),
-                      Text(
-                        'Active Appliances',
-                        style: Theme.of(context).textTheme.titleLarge,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Active Appliances',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          Chip(
+                            label: Text(
+                              '${controller.getActiveDevicesCount()} active',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        ],
                       ).animate().fadeIn(delay: 200.ms),
                       const SizedBox(height: 16),
                     ],
@@ -87,10 +95,12 @@ class DashboardView extends StatelessWidget {
                         horizontal: 16.0,
                         vertical: 8.0,
                       ),
-                      child: ApplianceCard(reading: reading)
-                          .animate()
-                          .fadeIn(delay: (300 + (index * 100)).ms)
-                          .slideX(),
+                      child: DeviceControlCard(
+                        reading: reading,
+                        isControlLoading: controller.isDeviceControlLoading(reading.applianceInfo.id),
+                        onToggle: () => controller.toggleDevice(reading.applianceInfo),
+                        monthlyConsumption: controller.getDeviceMonthlyConsumption(reading.applianceInfo.id),
+                      ).animate().fadeIn(delay: (300 + (index * 100)).ms).slideX(),
                     );
                   },
                   childCount: controller.readings.length,
@@ -101,6 +111,10 @@ class DashboardView extends StatelessWidget {
           ),
         );
       }),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Get.toNamed('/add-device'),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
@@ -164,6 +178,12 @@ class DashboardView extends StatelessWidget {
             onPressed: controller.retryFetch,
             icon: const Icon(Icons.refresh),
             label: const Text('Refresh'),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => Get.toNamed('/add-device'),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Device'),
           ),
         ],
       ),
