@@ -108,13 +108,6 @@ class DeviceControlCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                Text(
-                  'Last updated: $formattedDate',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
               ],
             ),
           ],
@@ -151,6 +144,7 @@ class DeviceControlCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
+          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Colors.grey[600],
           ),
@@ -158,6 +152,7 @@ class DeviceControlCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           value,
+          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
