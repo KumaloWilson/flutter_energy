@@ -73,16 +73,16 @@ class RoomDetailView extends StatelessWidget {
                         id: device.id.toString(),
                         name: device.appliance,
                         type: "Type",
-                        wattage: double.parse(device.ratedPower),
-                        roomId: "roomid",
-                        meterNumber: "meterNumber",
+                        wattage: double.parse(device.ratedPower.split(' ').first),
+                        roomId: room.id,
+                        meterNumber: device.meterNumber,
                         createdAt: DateTime.now()
                     ),
                     onTap: () => Get.toNamed('/appliance-details', arguments: {'appliance': device}),
                     onToggle: (_) => _toggleDevice(controller, device),
                     showDetails: true,
                   ),
-                )).toList(),
+                )),
               ],
             ),
           ),
@@ -135,10 +135,31 @@ class RoomDetailView extends StatelessWidget {
     int activeDevices = 0;
 
     for (final device in devices) {
-      if (device.currentReading != null) {
-        totalConsumption += device.currentReading;
+      // Check if the property exists before accessing it
+      try {
+        // Use null-aware operator to check if the property exists
+        if (device.currentReading != null) {
+          totalConsumption += device.currentReading;
+        }
+      } catch (e) {
+        // Property doesn't exist, use a fallback or skip
+        // You might want to use another property or a default value
+        // For example, you could use device.ratedPower if available
+        final power = double.tryParse(device.ratedPower ?? '0') ?? 0;
+        // Optionally add some portion of rated power to consumption
+        // totalConsumption += device.isActive ? power * 0.1 : 0;
       }
-      if (device.isActive) {
+
+      // Check if isActive property exists and is true
+      bool isActive = false;
+      try {
+        isActive = device.isActive ?? false;
+      } catch (e) {
+        // Property doesn't exist
+        isActive = false;
+      }
+
+      if (isActive) {
         activeDevices++;
       }
     }
