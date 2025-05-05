@@ -28,10 +28,36 @@ class HomeController extends GetxController {
   // For device control
   final RxMap<int, bool> deviceControlLoading = <int, bool>{}.obs;
 
+  // Add a flag to track if auth is initialized
+  final RxBool isAuthInitialized = false.obs;
+
   @override
   void onInit() {
     super.onInit();
-    fetchHomeData();
+    // Add listener for auth state changes
+    ever(_authController.currentUser, _onAuthChanged);
+
+    // Check if auth is already initialized
+    if (_authController.currentUser.value != null) {
+      isAuthInitialized.value = true;
+      fetchHomeData();
+    }
+  }
+
+  // Handle auth state changes
+  void _onAuthChanged(user) {
+    if (user != null && !isAuthInitialized.value) {
+      isAuthInitialized.value = true;
+      fetchHomeData();
+    } else if (user == null) {
+      // Handle logout if needed
+      isAuthInitialized.value = false;
+      currentHome.value = null;
+      rooms.clear();
+      devicesByRoom.clear();
+      selectedRoom.value = null;
+      allDevices.clear();
+    }
   }
 
   Future<void> fetchHomeData() async {
@@ -40,6 +66,14 @@ class HomeController extends GetxController {
       hasError.value = false;
       errorMessage.value = '';
 
+      // Make sure auth is initialized before proceeding
+      if (!isAuthInitialized.value) {
+        DevLogs.logInfo('Waiting for auth to initialize before fetching home data');
+        // Don't set error here - we'll wait for auth to initialize through the listener
+        return;
+      }
+
+      // Double check current user is available
       if (_authController.currentUser.value == null) {
         hasError.value = true;
         errorMessage.value = 'User not logged in';

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:flutter_energy/routes/app_pages.dart';
 import 'package:flutter_energy/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_energy/firebase_options.dart';
 import 'package:flutter_energy/modules/auth/controllers/auth_controller.dart';
 import 'package:flutter_energy/modules/settings/controller/settings_controller.dart';
 import 'bindings/bindings.dart';

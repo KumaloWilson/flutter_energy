@@ -23,9 +23,6 @@ class FirestoreService {
           meterNumber: doc['meterNumber'],
           currentReading: doc['currentReading']?.toDouble() ?? 0.0,
           createdAt: (doc['createdAt'] as Timestamp).toDate(),
-          lastUpdated: doc['lastUpdated'] != null
-              ? (doc['lastUpdated'] as Timestamp).toDate()
-              : null,
         );
       }
       return null;

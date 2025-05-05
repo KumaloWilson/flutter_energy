@@ -24,19 +24,19 @@ class AuthController extends GetxController {
     super.onInit();
     checkUserLoggedIn();
 
-    // Listen to auth state changes
-    _auth.authStateChanges().listen((User? user) {
-      if (user != null) {
-        isLoggedIn.value = true;
-        fetchUserData(user.uid);
-        fetchFamilyMembers();
-      } else {
-        isLoggedIn.value = false;
-        currentUser.value = null;
-        familyMembers.clear();
-      }
-    });
+    // Directly check the currently authenticated user
+    final user = _auth.currentUser;
+    if (user != null) {
+      isLoggedIn.value = true;
+      fetchUserData(user.uid);
+      fetchFamilyMembers();
+    } else {
+      isLoggedIn.value = false;
+      currentUser.value = null;
+      familyMembers.clear();
+    }
   }
+
 
   Future<void> checkUserLoggedIn() async {
     try {

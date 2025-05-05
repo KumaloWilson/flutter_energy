@@ -6,7 +6,7 @@ import 'package:flutter_energy/modules/home/widgets/room_card.dart';
 import 'package:flutter_energy/modules/home/widgets/meter_reading_card.dart';
 
 class HomeView extends StatelessWidget {
-  const HomeView({Key? key}) : super(key: key);
+  const HomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
