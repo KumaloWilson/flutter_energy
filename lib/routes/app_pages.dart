@@ -75,10 +75,10 @@ class AppPages {
       name: Routes.COMPARISON,
       page: () => const ComparisonView(),
     ),
-    GetPage(
-      name: Routes.ROOM_DETAIL,
-      page: () => const RoomDetailView(),
-    ),
+    // GetPage(
+    //   name: Routes.ROOM_DETAIL,
+    //   page: () => const RoomDetailView(room: '',),
+    // ),
     GetPage(
       name: Routes.FAMILY_ACCESS,
       page: () => const FamilyAccessView(),

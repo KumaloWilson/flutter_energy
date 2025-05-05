@@ -343,6 +343,7 @@ class DeviceDetailsView extends StatelessWidget {
                         children: [
                           Obx(() => Text(
                             DateFormat('MMM d, yyyy').format(controller.endDate.value),
+                            overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodyMedium,
                           )),
                           const Icon(Icons.calendar_today, size: 16),

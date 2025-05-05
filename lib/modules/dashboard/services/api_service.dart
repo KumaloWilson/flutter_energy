@@ -2,17 +2,19 @@ import 'package:dio/dio.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/utilities/logger.dart';
+
 class ApiService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://sereneinv.co.zw/minimeter/',
-    connectTimeout: const Duration(seconds: 50),
-    receiveTimeout: const Duration(seconds: 50),
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
   ));
 
-  // Fetch all registered devices
+  // Get all registered devices
   Future<List<ApplianceInfo>> getRegisteredDevices() async {
     try {
-      final response = await _dio.get('all-devices-registered/');
+      final response = await _dio.get('all-devices-registered');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
@@ -27,8 +29,8 @@ class ApiService {
     }
   }
 
-  // Fetch all readings for a specific device
-  Future<List<ApplianceReading>> getDeviceReadings(int deviceId) async {
+  // Get all records for a specific device
+  Future<List<ApplianceReading>> getDeviceRecords(int deviceId) async {
     try {
       final response = await _dio.get('all-records-per-device/$deviceId');
 
@@ -36,66 +38,96 @@ class ApiService {
         final List<dynamic> data = response.data;
         return data.map((json) => ApplianceReading.fromApiJson(json)).toList();
       } else {
+        throw Exception('Failed to load records: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to fetch device records');
+    } catch (e) {
+      throw Exception('Unexpected error while fetching records: $e');
+    }
+  }
+
+  // Get the last reading for all devices
+  Future<List<ApplianceReading>> getLastReadings() async {
+    try {
+      final response = await _dio.get('all-records/');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+
+        // Group readings by device ID and get the latest for each
+        final Map<int, ApplianceReading> latestReadings = {};
+
+        for (final json in data) {
+          final reading = ApplianceReading.fromApiJson(json);
+          final deviceId = reading.applianceInfo.id;
+
+          if (!latestReadings.containsKey(deviceId) ||
+              reading.readingTimeStamp.isAfter(latestReadings[deviceId]!.readingTimeStamp)) {
+            latestReadings[deviceId] = reading;
+          }
+        }
+
+        return latestReadings.values.toList();
+      } else {
         throw Exception('Failed to load readings: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      throw _handleError(e, 'Failed to fetch device readings');
+      throw _handleError(e, 'Failed to fetch last readings');
     } catch (e) {
       throw Exception('Unexpected error while fetching readings: $e');
     }
   }
 
-  // Get the last reading for a specific device
-  Future<ApplianceReading?> getLastReadingForDevice(int deviceId) async {
-    https://sereneinv.co.zw/minimeter/last-reading/
+  // Get the very latest reading (single reading)
+  Future<ApplianceReading> getLatestReading() async {
     try {
-      final readings = await getDeviceReadings(deviceId);
-      if (readings.isEmpty) {
-        return null;
+      final response = await _dio.get('last-reading/');
+
+      if (response.statusCode == 200) {
+        return ApplianceReading.fromApiJson(response.data);
+      } else {
+        throw Exception('Failed to load latest reading: ${response.statusCode}');
       }
-
-      // Sort readings by timestamp (most recent first)
-      readings.sort((a, b) =>
-          b.readingTimeStamp.compareTo(a.readingTimeStamp)
-      );
-
-      return readings.first;
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to fetch latest reading');
     } catch (e) {
-      throw Exception('Failed to get last reading for device $deviceId: $e');
+      throw Exception('Unexpected error while fetching latest reading: $e');
     }
   }
 
-  // Get total energy consumption for this month for the specified devices
+  // Get consumption summary for devices in a date range
   Future<Map<int, double>> getCurrentMonthConsumption(List<int> deviceIds) async {
     try {
-      // Get the start and end date for the current month
+      // Calculate current month date range
       final now = DateTime.now();
-      final firstDayOfMonth = DateTime(now.year, now.month, 1);
-      final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
-      // Format dates for the API
-      final startDate = dateFormat.format(firstDayOfMonth);
-      final endDate = dateFormat.format(now);
+      final startDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(startOfMonth);
+      final endDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(endOfMonth);
 
-      // Prepare the device IDs as a comma-separated string
-      final deviceIdsString = deviceIds.join(',');
+      return getTotalConsumption(deviceIds, startDate, endDate);
+    } catch (e) {
+      DevLogs.logError('Failed to get current month consumption: $e');
+      rethrow;
+    }
+  }
 
-      // Make the API call
-      final response = await _dio.get(
-        'total-consumption-summary/',
-        queryParameters: {
-          'device_ids': deviceIdsString,
-          'start_date': startDate,
-          'end_date': endDate,
-        },
-      );
+  // Get total consumption for devices in a date range
+  Future<Map<int, double>> getTotalConsumption(
+      List<int> deviceIds, String startDate, String endDate) async {
+    try {
+      final deviceIdsParam = deviceIds.join(',');
+      final uri = 'total-consumption-summary/?device_ids=$deviceIdsParam&start_date=$startDate&end_date=$endDate';
+
+      final response = await _dio.get(uri);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-
-        // Convert the response to a Map with device ID as key and energy consumption as value
         final Map<int, double> result = {};
-        for (var item in data) {
+
+        for (final item in data) {
           final deviceId = item['Appliance_Info_id'] as int;
           final energy = (item['total_energy'] as num).toDouble();
           result[deviceId] = energy;
@@ -103,12 +135,123 @@ class ApiService {
 
         return result;
       } else {
-        throw Exception('Failed to load consumption data: ${response.statusCode}');
+        throw Exception('Failed to load consumption: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      throw _handleError(e, 'Failed to fetch monthly consumption');
+      throw _handleError(e, 'Failed to fetch consumption data');
     } catch (e) {
-      throw Exception('Unexpected error while fetching monthly consumption: $e');
+      throw Exception('Unexpected error while fetching consumption: $e');
+    }
+  }
+
+  // Add a new device
+  Future<bool> addDevice({
+    required String name,
+    required String ratedPower,
+    String? meterNumber,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'add-device',
+        data: {
+          'Device': name,
+          'Rated_Power': ratedPower,
+          'MeterNumber': meterNumber ?? 'DEFAULT',
+          'Relay_Status': 'ON',
+        },
+      );
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to add device');
+    } catch (e) {
+      throw Exception('Unexpected error while adding device: $e');
+    }
+  }
+
+  // Turn device ON
+  Future<bool> turnDeviceOn(String meterNumber) async {
+    try {
+      final response = await _dio.get('control/on/$meterNumber/');
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Failed to turn device on: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to turn device on');
+    } catch (e) {
+      throw Exception('Unexpected error while turning device on: $e');
+    }
+  }
+
+  // Turn device OFF
+  Future<bool> turnDeviceOff(String meterNumber) async {
+    try {
+      final response = await _dio.get('control/off/$meterNumber/');
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Failed to turn device off: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to turn device off');
+    } catch (e) {
+      throw Exception('Unexpected error while turning device off: $e');
+    }
+  }
+
+  // Get complete appliance data with latest readings
+  Future<List<ApplianceReading>> getCompleteApplianceData() async {
+    try {
+      // Get all devices first
+      final devices = await getRegisteredDevices();
+
+      // Then get all readings
+      final readings = await getLastReadings();
+
+      // Create a map of device IDs to device info
+      final Map<int, ApplianceInfo> deviceMap = {
+        for (var device in devices) device.id: device
+      };
+
+      // Update readings with complete device info
+      final List<ApplianceReading> completeReadings = [];
+
+      for (final reading in readings) {
+        final deviceId = reading.applianceInfo.id;
+
+        if (deviceMap.containsKey(deviceId)) {
+          // We have device info for this reading
+          completeReadings.add(reading.copyWithApplianceInfo(deviceMap[deviceId]!));
+        } else {
+          // No device info, use what we have
+          completeReadings.add(reading);
+        }
+      }
+
+      // Add devices that don't have readings yet
+      for (final device in devices) {
+        if (!readings.any((reading) => reading.applianceInfo.id == device.id)) {
+          // Create a placeholder reading for this device
+          completeReadings.add(ApplianceReading(
+            id: device.id,
+            applianceInfo: device,
+            voltage: '220',
+            current: '0',
+            timeOn: '0',
+            activeEnergy: '0',
+            readingTimeStamp: DateTime.now(),
+          ));
+        }
+      }
+
+      return completeReadings;
+    } catch (e) {
+      DevLogs.logError('Failed to get complete appliance data: $e');
+      rethrow;
     }
   }
 

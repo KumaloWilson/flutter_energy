@@ -27,7 +27,7 @@ class ApplianceDetailView extends StatelessWidget {
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                controller.appliance.value.applianceInfo.appliance,
+                controller.appliance.value.id.toString(),
                 style: TextStyle(
                   color: colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
@@ -60,7 +60,7 @@ class ApplianceDetailView extends StatelessWidget {
                         tag: 'appliance-${controller.appliance.value.id}',
                         child: Icon(
                           _getApplianceIcon(
-                            controller.appliance.value.applianceInfo.appliance,
+                            controller.appliance.value.id.toString(),
                           ),
                           size: 80,
                           color: colorScheme.onPrimary,
@@ -129,7 +129,7 @@ class ApplianceDetailView extends StatelessWidget {
                   child: _buildOverviewItem(
                     context,
                     'Rated Power',
-                    controller.appliance.value.applianceInfo.ratedPower,
+                    controller.appliance.value.id.toString(),
                     Icons.power,
                     colorScheme.primary,
                   ),

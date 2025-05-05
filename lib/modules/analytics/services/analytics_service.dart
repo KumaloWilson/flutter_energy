@@ -6,7 +6,7 @@ import '../../../core/utilities/logger.dart';
 
 class AnalyticsService {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://192.168.0.178:5000/api',
+    baseUrl: 'http://192.168.43.229:5000/api',
     connectTimeout: const Duration(seconds: 30),
     receiveTimeout: const Duration(seconds: 30),
   ));
