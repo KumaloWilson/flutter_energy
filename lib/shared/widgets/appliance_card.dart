@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_energy/modules/home/models/appliance_model.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+import 'package:flutter_energy/modules/home/controllers/home_controller.dart';
 
 class ApplianceCard extends StatelessWidget {
   final ApplianceModel appliance;
   final VoidCallback onTap;
   final Function(bool) onToggle;
   final bool showDetails;
+  final bool showRoomTransfer;
 
   const ApplianceCard({
     super.key,
@@ -14,6 +17,7 @@ class ApplianceCard extends StatelessWidget {
     required this.onTap,
     required this.onToggle,
     this.showDetails = true,
+    this.showRoomTransfer = true,
   });
 
   @override
@@ -62,11 +66,36 @@ class ApplianceCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Power toggle
-                  Switch(
-                    value: appliance.isActive,
-                    onChanged: (value) => onToggle(value),
-                    activeColor: Theme.of(context).colorScheme.primary,
+                  // Menu and power toggle
+                  Row(
+                    children: [
+                      if (showRoomTransfer)
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) {
+                            if (value == 'move') {
+                              _showRoomSelectionDialog(context);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem<String>(
+                              value: 'move',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.swap_horiz),
+                                  SizedBox(width: 8),
+                                  Text('Move to another room'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      Switch(
+                        value: appliance.isActive,
+                        onChanged: (value) => onToggle(value),
+                        activeColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -158,6 +187,115 @@ class ApplianceCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showRoomSelectionDialog(BuildContext context) {
+    final HomeController homeController = Get.find<HomeController>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Move to Room'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Obx(() {
+            final rooms = homeController.rooms;
+
+            if (rooms.isEmpty) {
+              return const Text('No rooms available');
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Select a room to move this device to:'),
+                const SizedBox(height: 16),
+                ...rooms.map((room) => ListTile(
+                  title: Text(room.name),
+                  leading: Icon(
+                    _getRoomIcon(room.name),
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  onTap: () {
+                    // Don't move if it's already in this room
+                    if (room.id == appliance.roomId) {
+                      Get.back();
+                      Get.snackbar(
+                        'Info',
+                        'Device is already in this room',
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                      return;
+                    }
+
+                    // Move the device to the selected room
+                    _moveDeviceToRoom(room.id);
+                    Get.back();
+                  },
+                  trailing: room.id == appliance.roomId
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                )),
+              ],
+            );
+          }),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _moveDeviceToRoom(String roomId) {
+    final HomeController homeController = Get.find<HomeController>();
+
+    // Convert the appliance ID to int for the API
+    final deviceId = int.tryParse(appliance.id);
+    if (deviceId == null) {
+      Get.snackbar(
+        'Error',
+        'Invalid device ID',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    homeController.assignDeviceToRoom(deviceId, roomId).then((success) {
+      if (success) {
+        Get.snackbar(
+          'Success',
+          'Device moved to new room',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to move device: ${homeController.errorMessage.value}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      }
+    });
+  }
+
+  IconData _getRoomIcon(String roomName) {
+    final name = roomName.toLowerCase();
+    if (name.contains('living')) return Icons.weekend;
+    if (name.contains('kitchen')) return Icons.kitchen;
+    if (name.contains('bed')) return Icons.bed;
+    if (name.contains('bath')) return Icons.bathtub;
+    if (name.contains('office')) return Icons.computer;
+    if (name.contains('dining')) return Icons.dining;
+    return Icons.home;
   }
 
   Widget _buildInfoTile(BuildContext context, String label, String value, IconData icon) {

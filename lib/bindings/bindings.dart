@@ -5,6 +5,7 @@ import '../modules/analytics/controllers/analytics_controller.dart';
 import '../modules/analytics/controllers/comparison_controller.dart';
 import '../modules/analytics/controllers/device_details_controller.dart';
 import '../modules/analytics/controllers/peak_demand_controller.dart';
+import '../modules/analytics/services/analytics_service.dart';
 import '../modules/appliance/controller/appliance_controller.dart';
 import '../modules/auth/controller/auth_controller.dart';
 import '../modules/auth/controllers/auth_controller.dart';
@@ -23,6 +24,7 @@ class InitialBinding implements Bindings {
       // Register services first
       Get.put(ApiService(), permanent: true);
       Get.put(FirestoreService(), permanent: true);
+      Get.put(AnalyticsService(), permanent: true);
 
       // Core controllers
       Get.put(AuthController(), permanent: true);

@@ -46,18 +46,7 @@ class LoginView extends StatelessWidget {
                   ],
                 ),
                 
-                const SizedBox(height: 40),
-                
-                // Home Image
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    'assets/images/smart_home.jpg',
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ).animate().fadeIn(delay: 400.ms).slideY(),
+
                 
                 const SizedBox(height: 40),
                 

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+
+import '../../modules/analytics/views/device_details_view.dart';
 
 class DeviceControlCard extends StatelessWidget {
   final ApplianceReading reading;
@@ -27,90 +30,112 @@ class DeviceControlCard extends StatelessWidget {
     final deviceIcon = _getDeviceIcon(deviceName);
     final deviceColor = isOn ? Colors.green : Colors.grey;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isOn ? Colors.green.withOpacity(0.5) : Colors.grey.withOpacity(0.3),
-          width: 1,
+    return GestureDetector(
+      onTap: () {
+        // Navigate to device details screen
+        Get.to(
+          () => DeviceDetailsView(
+            deviceId: reading.applianceInfo.id,
+            deviceName: deviceName,
+          ),
+        );
+      },
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: isOn ? Colors.green.withOpacity(0.5) : Colors.grey.withOpacity(0.3),
+            width: 1,
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      deviceIcon,
-                      color: deviceColor,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          deviceName,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        deviceIcon,
+                        color: deviceColor,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            deviceName,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        Text(
-                          'Rated: ${reading.applianceInfo.ratedPower}W',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                          Text(
+                            'Rated: ${reading.applianceInfo.ratedPower}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ],
+                  ),
+                  _buildDeviceSwitch(isOn),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildInfoColumn(
+                    context,
+                    'Current',
+                    '${reading.current}A',
+                    Icons.bolt,
+                  ),
+                  _buildInfoColumn(
+                    context,
+                    'Voltage',
+                    '${reading.voltage}V',
+                    Icons.electrical_services,
+                  ),
+                  _buildInfoColumn(
+                    context,
+                    'Energy',
+                    '$formattedEnergy kWh',
+                    Icons.power,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Monthly: ${monthlyConsumption.toStringAsFixed(2)} kWh',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
-                ),
-                _buildDeviceSwitch(isOn),
-              ],
-            ),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildInfoColumn(
-                  context,
-                  'Current',
-                  '${reading.current}A',
-                  Icons.bolt,
-                ),
-                _buildInfoColumn(
-                  context,
-                  'Voltage',
-                  '${reading.voltage}V',
-                  Icons.electrical_services,
-                ),
-                _buildInfoColumn(
-                  context,
-                  'Energy',
-                  '$formattedEnergy kWh',
-                  Icons.power,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Monthly: ${monthlyConsumption.toStringAsFixed(2)} kWh',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  ),
+
+                ],
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  'Tap for detailed analytics',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -144,7 +169,6 @@ class DeviceControlCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Colors.grey[600],
           ),
@@ -152,7 +176,6 @@ class DeviceControlCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           value,
-          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
