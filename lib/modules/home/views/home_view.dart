@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_energy/modules/analytics/views/device_details_view.dart';
 import 'package:flutter_energy/modules/home/views/room_detail_view.dart';
 import 'package:get/get.dart';
 import 'package:flutter_energy/modules/home/controllers/home_controller.dart';
@@ -319,7 +320,9 @@ class HomeView extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 12),
           child: ApplianceCard(
             appliance: applianceModel,
-            onTap: () => Get.toNamed('/appliance-details', arguments: {'appliance': device}),
+            onTap: () => Get.to(
+                ()=> DeviceDetailsView(deviceId: device.id, deviceName: applianceModel.name,)
+            ),
             onToggle: (_) => controller.toggleDevice(device),
             showDetails: false,
             showRoomTransfer: true,

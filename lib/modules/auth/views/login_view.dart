@@ -45,9 +45,8 @@ class LoginView extends StatelessWidget {
                     ).animate().fadeIn(delay: 300.ms),
                   ],
                 ),
-                
 
-                
+
                 const SizedBox(height: 40),
                 
                 // Login Form
