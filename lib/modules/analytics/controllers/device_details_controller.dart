@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../dashboard/models/appliance_reading.dart';
 import '../../dashboard/services/api_service.dart';
+import '../../settings/controller/settings_controller.dart';
 import '../services/analytics_service.dart';
 import '../../../core/utilities/logger.dart';
 
@@ -39,6 +40,8 @@ class DeviceDetailsController extends GetxController {
   final RxList<DailyData> dailyData = <DailyData>[].obs;
   final RxList<double> hourlyPatterns = <double>[].obs;
 
+  final settingsController = Get.find<SettingsController>();
+
   // Historical readings
   final RxList<ApplianceReading> historicalReadings = <ApplianceReading>[].obs;
 
@@ -49,12 +52,13 @@ class DeviceDetailsController extends GetxController {
   final RxMap<String, double> powerUsageTrends = <String, double>{}.obs;
 
   // Cost calculation
-  final RxDouble energyRate = 0.15.obs; // Default rate in $ per kWh
+  late RxDouble energyRate;
 
   @override
   void onInit() {
     super.onInit();
     fetchAllData();
+    energyRate = settingsController.energyRate;
   }
 
   Future<void> fetchAllData() async {
@@ -319,10 +323,6 @@ class DeviceDetailsController extends GetxController {
 
   void setEndDate(DateTime date) {
     endDate.value = date;
-  }
-
-  void setEnergyRate(double rate) {
-    energyRate.value = rate;
   }
 
   double calculateCost(double energy) {
