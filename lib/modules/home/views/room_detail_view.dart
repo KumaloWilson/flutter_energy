@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter_energy/modules/home/controllers/home_controller.dart';
 import 'package:flutter_energy/modules/home/models/room_model.dart';
 import 'package:flutter_energy/shared/widgets/appliance_card.dart';
+import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
 
 class RoomDetailView extends StatelessWidget {
   final RoomModel room;
@@ -68,20 +69,7 @@ class RoomDetailView extends StatelessWidget {
                 // Devices List
                 ...devices.map((device) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: ApplianceCard(
-                    appliance: ApplianceModel(
-                        id: device.id.toString(),
-                        name: device.appliance,
-                        type: "Type",
-                        wattage: double.parse(device.ratedPower.split(' ').first),
-                        roomId: room.id,
-                        meterNumber: device.meterNumber,
-                        createdAt: DateTime.now()
-                    ),
-                    onTap: () => Get.toNamed('/appliance-details', arguments: {'appliance': device}),
-                    onToggle: (_) => _toggleDevice(controller, device),
-                    showDetails: true,
-                  ),
+                  child: _buildApplianceCard(context, controller, device),
                 )),
               ],
             ),
@@ -93,6 +81,28 @@ class RoomDetailView extends StatelessWidget {
         icon: const Icon(Icons.add),
         label: const Text('Add Device'),
       ),
+    );
+  }
+
+  Widget _buildApplianceCard(BuildContext context, HomeController controller, ApplianceInfo device) {
+    // Convert ApplianceInfo to ApplianceModel for the card
+    final applianceModel = ApplianceModel(
+      id: device.id.toString(),
+      name: device.appliance,
+      type: _determineDeviceType(device.appliance),
+      wattage: double.parse(device.ratedPower.split(' ').first),
+      roomId: room.id,
+      meterNumber: device.meterNumber,
+      createdAt: DateTime.now(),
+      isActive: device.relayStatus == 'ON',
+    );
+
+    return ApplianceCard(
+      appliance: applianceModel,
+      onTap: () => Get.toNamed('/appliance-details', arguments: {'appliance': device}),
+      onToggle: (_) => _toggleDevice(controller, device),
+      showDetails: true,
+      showRoomTransfer: true,
     );
   }
 
@@ -129,39 +139,21 @@ class RoomDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildRoomStatsCard(BuildContext context, List devices) {
+  Widget _buildRoomStatsCard(BuildContext context, List<ApplianceInfo> devices) {
     // Calculate total power consumption
     double totalConsumption = 0;
     int activeDevices = 0;
 
     for (final device in devices) {
-      // Check if the property exists before accessing it
-      try {
-        // Use null-aware operator to check if the property exists
-        if (device.currentReading != null) {
-          totalConsumption += device.currentReading;
-        }
-      } catch (e) {
-        // Property doesn't exist, use a fallback or skip
-        // You might want to use another property or a default value
-        // For example, you could use device.ratedPower if available
-        final power = double.tryParse(device.ratedPower ?? '0') ?? 0;
-        // Optionally add some portion of rated power to consumption
-        // totalConsumption += device.isActive ? power * 0.1 : 0;
-      }
-
-      // Check if isActive property exists and is true
-      bool isActive = false;
-      try {
-        isActive = device.isActive ?? false;
-      } catch (e) {
-        // Property doesn't exist
-        isActive = false;
-      }
-
-      if (isActive) {
+      // Check if the device is active
+      if (device.relayStatus == 'ON') {
         activeDevices++;
       }
+
+      // For consumption, we'll use a placeholder since we don't have real-time data
+      // In a real app, you'd fetch this from your API
+      final power = double.tryParse(device.ratedPower.split(' ').first) ?? 0;
+      totalConsumption += device.relayStatus == 'ON' ? power * 0.1 : 0;
     }
 
     return Card(
@@ -197,7 +189,7 @@ class RoomDetailView extends StatelessWidget {
                 ),
                 _buildStatItem(
                   context,
-                  'Total Usage',
+                  'Est. Usage',
                   '${totalConsumption.toStringAsFixed(1)} kWh',
                   Icons.show_chart,
                 ),
@@ -242,30 +234,28 @@ class RoomDetailView extends StatelessWidget {
     );
   }
 
-  void _toggleDevice(HomeController controller, dynamic device) {
-    // controller.toggleDeviceStatus(device).then((success) {
-    //   if (success) {
-    //     Get.snackbar(
-    //       device.isActive ? 'Device Turned Off' : 'Device Turned On',
-    //       device.isActive
-    //           ? '${device.name} has been turned off'
-    //           : '${device.name} has been turned on',
-    //       snackPosition: SnackPosition.BOTTOM,
-    //       backgroundColor: device.isActive
-    //           ? Colors.blueGrey.withAlpha(150)
-    //           : Colors.green.withAlpha(150),
-    //       colorText: Colors.white,
-    //       duration: const Duration(seconds: 2),
-    //     );
-    //   } else {
-    //     Get.snackbar(
-    //       'Error',
-    //       'Failed to toggle device: ${controller.errorMessage.value}',
-    //       snackPosition: SnackPosition.BOTTOM,
-    //       backgroundColor: Colors.red.withAlpha(150),
-    //       colorText: Colors.white,
-    //     );
-    //   }
-    // });
+  void _toggleDevice(HomeController controller, ApplianceInfo device) {
+    controller.toggleDevice(device).then((success) {
+      if (!success) {
+        Get.snackbar(
+          'Error',
+          'Failed to toggle device: ${controller.errorMessage.value}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withAlpha(150),
+          colorText: Colors.white,
+        );
+      }
+    });
+  }
+
+  String _determineDeviceType(String deviceName) {
+    final name = deviceName.toLowerCase();
+    if (name.contains('light') || name.contains('lamp')) return 'lighting';
+    if (name.contains('tv') || name.contains('television')) return 'entertainment';
+    if (name.contains('fridge') || name.contains('refrigerator')) return 'refrigeration';
+    if (name.contains('ac') || name.contains('air')) return 'cooling';
+    if (name.contains('heater')) return 'heating';
+    if (name.contains('oven') || name.contains('stove')) return 'cooking';
+    return 'other';
   }
 }

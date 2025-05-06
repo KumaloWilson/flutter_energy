@@ -172,7 +172,7 @@ class ApiService {
   // Turn device ON
   Future<bool> turnDeviceOn(String meterNumber) async {
     try {
-      final response = await _dio.get('control/on/$meterNumber/');
+      final response = await _dio.post('control/on/$meterNumber/');
 
       if (response.statusCode == 200) {
         return true;
@@ -189,7 +189,7 @@ class ApiService {
   // Turn device OFF
   Future<bool> turnDeviceOff(String meterNumber) async {
     try {
-      final response = await _dio.get('control/off/$meterNumber/');
+      final response = await _dio.post('control/off/$meterNumber/');
 
       if (response.statusCode == 200) {
         return true;
