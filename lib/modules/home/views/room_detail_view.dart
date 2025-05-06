@@ -150,8 +150,6 @@ class RoomDetailView extends StatelessWidget {
         activeDevices++;
       }
 
-      // For consumption, we'll use a placeholder since we don't have real-time data
-      // In a real app, you'd fetch this from your API
       final power = double.tryParse(device.ratedPower.split(' ').first) ?? 0;
       totalConsumption += device.relayStatus == 'ON' ? power * 0.1 : 0;
     }

@@ -11,10 +11,10 @@ class DeviceDetailsView extends StatelessWidget {
   final String deviceName;
 
   const DeviceDetailsView({
-    super.key,
+    Key? key,
     required this.deviceId,
     required this.deviceName,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +77,11 @@ class DeviceDetailsView extends StatelessWidget {
 
               const SizedBox(height: 24),
 
+              // Real-time Metrics Card
+              _buildRealTimeMetricsCard(controller, context),
+
+              const SizedBox(height: 24),
+
               // Date Range Selector
               _buildDateRangeSelector(controller, context),
 
@@ -92,6 +97,11 @@ class DeviceDetailsView extends StatelessWidget {
 
               const SizedBox(height: 24),
 
+              // Historical Usage Card
+              _buildHistoricalUsageCard(controller, context),
+
+              const SizedBox(height: 24),
+
               // Energy Efficiency Card
               _buildEnergyEfficiencyCard(controller, context),
 
@@ -99,6 +109,11 @@ class DeviceDetailsView extends StatelessWidget {
 
               // Usage Patterns Card
               _buildUsagePatternsCard(controller, context),
+
+              const SizedBox(height: 24),
+
+              // Weekly Trends Card
+              _buildWeeklyTrendsCard(controller, context),
             ],
           );
         }),
@@ -205,7 +220,7 @@ class DeviceDetailsView extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '\$${(controller.monthlyEnergy.value * 0.15).toStringAsFixed(2)}',
+                        '\$${(controller.monthlyEnergy.value * controller.energyRate.value).toStringAsFixed(2)}',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -231,6 +246,138 @@ class DeviceDetailsView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRealTimeMetricsCard(DeviceDetailsController controller, BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Real-time Metrics',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Live',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildMetricItem(
+                  context: context,
+                  icon: Icons.bolt,
+                  iconColor: Colors.amber,
+                  title: 'Current',
+                  value: '${controller.getCurrent().toStringAsFixed(2)} A',
+                ),
+                _buildMetricItem(
+                  context: context,
+                  icon: Icons.electrical_services,
+                  iconColor: Colors.blue,
+                  title: 'Voltage',
+                  value: '${controller.getVoltage().toStringAsFixed(1)} V',
+                ),
+                _buildMetricItem(
+                  context: context,
+                  icon: Icons.power,
+                  iconColor: Colors.red,
+                  title: 'Power',
+                  value: '${controller.getPower().toStringAsFixed(2)} W',
+                ),
+                _buildMetricItem(
+                  context: context,
+                  icon: Icons.speed,
+                  iconColor: Colors.purple,
+                  title: 'PF',
+                  value: '${controller.getPowerFactor().toStringAsFixed(2)}',
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricItem({
+    required BuildContext context,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: iconColor,
+            size: 24,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
@@ -343,7 +490,6 @@ class DeviceDetailsView extends StatelessWidget {
                         children: [
                           Obx(() => Text(
                             DateFormat('MMM d, yyyy').format(controller.endDate.value),
-                            overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodyMedium,
                           )),
                           const Icon(Icons.calendar_today, size: 16),
@@ -595,13 +741,240 @@ class DeviceDetailsView extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Estimated cost: \$${(total * 0.15).toStringAsFixed(2)}',
+                          'Estimated cost: \$${(total * controller.energyRate.value).toStringAsFixed(2)}',
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
                     ),
                   ),
                 ],
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoricalUsageCard(DeviceDetailsController controller, BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Historical Usage',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Obx(() {
+                  if (controller.isLoadingHistorical.value) {
+                    return const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  }
+                  return const Icon(Icons.history, color: Colors.indigo);
+                }),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Recent energy consumption records',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Obx(() {
+              if (controller.historicalReadings.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No historical data available'),
+                  ),
+                );
+              }
+
+              // Take the 5 most recent readings
+              final recentReadings = controller.historicalReadings.take(5).toList();
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: recentReadings.length,
+                itemBuilder: (context, index) {
+                  final reading = recentReadings[index];
+                  final energy = double.parse(reading.activeEnergy);
+                  final date = DateFormat('MMM d, yyyy h:mm a').format(reading.readingTimeStamp);
+
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.power,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    title: Text(
+                      '${energy.toStringAsFixed(4)} kWh',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      date,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    trailing: Text(
+                      '\$${(energy * controller.energyRate.value).toStringAsFixed(2)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeeklyTrendsCard(DeviceDetailsController controller, BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Weekly Usage Trends',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Energy consumption patterns by day of week',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Obx(() {
+              if (controller.powerUsageTrends.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No weekly trend data available'),
+                  ),
+                );
+              }
+
+              // Sort days in correct order
+              final daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+              final sortedTrends = <String, double>{};
+
+              for (final day in daysOrder) {
+                if (controller.powerUsageTrends.containsKey(day)) {
+                  sortedTrends[day] = controller.powerUsageTrends[day]!;
+                }
+              }
+
+              // Find max value for scaling
+              final maxValue = sortedTrends.values.reduce((a, b) => a > b ? a : b);
+
+              return Column(
+                children: sortedTrends.entries.map((entry) {
+                  final day = entry.key;
+                  final value = entry.value;
+                  final percentage = maxValue > 0 ? value / maxValue : 0.0;
+
+                  // Determine if it's a weekend
+                  final isWeekend = day == 'Saturday' || day == 'Sunday';
+                  final barColor = isWeekend ? Colors.purple : theme.colorScheme.primary;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          child: Text(
+                            day,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Stack(
+                                children: [
+                                  Container(
+                                    height: 16,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: theme.dividerColor.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  FractionallySizedBox(
+                                    widthFactor: percentage,
+                                    child: Container(
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: barColor,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 80,
+                          child: Text(
+                            '${value.toStringAsFixed(2)} kWh',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               );
             }),
           ],
@@ -773,7 +1146,7 @@ class DeviceDetailsView extends StatelessWidget {
                                 ),
                               ),
                               TextSpan(
-                                text: '\nCost: \$${(data.value * 0.15).toStringAsFixed(2)}',
+                                text: '\nCost: \$${(data.value * controller.energyRate.value).toStringAsFixed(2)}',
                                 style: theme.textTheme.bodySmall,
                               ),
                             ],
@@ -845,38 +1218,10 @@ class DeviceDetailsView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Obx(() {
-              // Calculate efficiency score (0-100)
-              final deviceRatedPower = controller.deviceInfo.value?.ratedPower ?? '0 W';
-              final ratedPower = int.tryParse(deviceRatedPower.replaceAll(RegExp(r'[^\d]'), '')) ?? 100;
-
-              // Simple efficiency calculation based on rated power and usage
-              // In a real app, this would be more sophisticated
-              final avgHourlyUsage = controller.hourlyData.isNotEmpty
-                  ? controller.hourlyData.map((e) => e.value).reduce((a, b) => a + b) / controller.hourlyData.length
-                  : 0.0;
-
-              final efficiencyScore = 100 - ((avgHourlyUsage * 1000) / ratedPower * 100);
-              final clampedScore = efficiencyScore.clamp(0.0, 100.0);
-
-              // Determine efficiency level
-              String efficiencyLevel;
-              Color efficiencyColor;
-              if (clampedScore >= 80) {
-                efficiencyLevel = 'Excellent';
-                efficiencyColor = Colors.green;
-              } else if (clampedScore >= 60) {
-                efficiencyLevel = 'Good';
-                efficiencyColor = Colors.lightGreen;
-              } else if (clampedScore >= 40) {
-                efficiencyLevel = 'Average';
-                efficiencyColor = Colors.amber;
-              } else if (clampedScore >= 20) {
-                efficiencyLevel = 'Poor';
-                efficiencyColor = Colors.orange;
-              } else {
-                efficiencyLevel = 'Very Poor';
-                efficiencyColor = Colors.red;
-              }
+              // Get efficiency data from controller
+              final efficiencyScore = controller.getEfficiencyScore();
+              final efficiencyLevel = controller.getEfficiencyLevel();
+              final efficiencyColor = controller.getEfficiencyColor();
 
               return Column(
                 children: [
@@ -893,7 +1238,7 @@ class DeviceDetailsView extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '${clampedScore.toStringAsFixed(1)}',
+                              '${efficiencyScore.toStringAsFixed(1)}',
                               style: theme.textTheme.headlineMedium?.copyWith(
                                 color: efficiencyColor,
                                 fontWeight: FontWeight.bold,
@@ -921,7 +1266,7 @@ class DeviceDetailsView extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             LinearProgressIndicator(
-                              value: clampedScore / 100,
+                              value: efficiencyScore / 100,
                               backgroundColor: Colors.grey[300],
                               color: efficiencyColor,
                               minHeight: 10,
@@ -1086,7 +1431,6 @@ class DeviceDetailsView extends StatelessWidget {
                         borderWidth: 2,
                       ),
                     ],
-                    // Try this implementation instead
                     getTitle: (index, angle) => RadarChartTitle(
                       text: '${(index * 4).toString().padLeft(2, '0')}:00',
                       angle: 0,
@@ -1101,17 +1445,8 @@ class DeviceDetailsView extends StatelessWidget {
                 return const SizedBox.shrink();
               }
 
-              // Find peak usage hours
-              final entries = <MapEntry<int, double>>[];
-              for (int i = 0; i < controller.hourlyPatterns.length; i++) {
-                entries.add(MapEntry(i, controller.hourlyPatterns[i]));
-              }
-
-              // Sort by value (descending)
-              entries.sort((a, b) => b.value.compareTo(a.value));
-
-              // Get top 3 peak hours
-              final topHours = entries.take(3).toList();
+              // Get peak usage hours from controller
+              final topHours = controller.getPeakUsageHours();
 
               return Container(
                 padding: const EdgeInsets.all(12),
