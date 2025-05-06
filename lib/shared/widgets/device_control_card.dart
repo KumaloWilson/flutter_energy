@@ -25,7 +25,6 @@ class DeviceControlCard extends StatelessWidget {
     final deviceName = reading.applianceInfo.appliance;
     final energy = double.parse(reading.activeEnergy);
     final formattedEnergy = energy.toStringAsFixed(2);
-    final formattedDate = DateFormat('MMM d, h:mm a').format(reading.readingTimeStamp);
 
     final deviceIcon = _getDeviceIcon(deviceName);
     final deviceColor = isOn ? Colors.green : Colors.grey;
