@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_energy/modules/analytics/views/device_details_view.dart';
 import 'package:flutter_energy/modules/home/models/appliance_model.dart';
+import 'package:flutter_energy/modules/home/views/add_appliance_view.dart';
 import 'package:get/get.dart';
 import 'package:flutter_energy/modules/home/controllers/home_controller.dart';
 import 'package:flutter_energy/modules/home/models/room_model.dart';
 import 'package:flutter_energy/shared/widgets/appliance_card.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
+
+import '../../appliance/view/appliance_detail_view.dart';
 
 class RoomDetailView extends StatelessWidget {
   final RoomModel room;
@@ -58,7 +62,9 @@ class RoomDetailView extends StatelessWidget {
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () => Get.toNamed('/add-appliance', arguments: {'roomId': room.id}),
+                      onPressed: () => Get.to(
+                        () => AddApplianceView(),
+                      ),
                       icon: const Icon(Icons.add),
                       label: const Text('Add Device'),
                     ),
@@ -77,7 +83,9 @@ class RoomDetailView extends StatelessWidget {
         );
       }),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.toNamed('/add-appliance', arguments: {'roomId': room.id}),
+        onPressed: () => Get.to(
+              () => AddApplianceView(),
+        ),
         icon: const Icon(Icons.add),
         label: const Text('Add Device'),
       ),
@@ -99,7 +107,9 @@ class RoomDetailView extends StatelessWidget {
 
     return ApplianceCard(
       appliance: applianceModel,
-      onTap: () => Get.toNamed('/appliance-details', arguments: {'appliance': device}),
+      onTap: () => Get.to(
+        () => DeviceDetailsView(deviceId: device.id ,deviceName: applianceModel.name,),
+      ),
       onToggle: (_) => _toggleDevice(controller, device),
       showDetails: true,
       showRoomTransfer: true,
@@ -130,7 +140,7 @@ class RoomDetailView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Get.toNamed('/add-appliance', arguments: {'roomId': room.id}),
+            onPressed: () => AddApplianceView(),
             icon: const Icon(Icons.add),
             label: const Text('Add Device'),
           ),

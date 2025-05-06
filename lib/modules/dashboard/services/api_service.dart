@@ -157,7 +157,6 @@ class ApiService {
           'Device': name,
           'Rated_Power': ratedPower,
           'MeterNumber': meterNumber ?? 'DEFAULT',
-          'Relay_Status': 'ON',
         },
       );
 
