@@ -152,7 +152,7 @@ class ApiService {
   }) async {
     try {
       final response = await _dio.post(
-        'add-device',
+        'add-device/',
         data: {
           'Device': name,
           'Rated_Power': ratedPower,

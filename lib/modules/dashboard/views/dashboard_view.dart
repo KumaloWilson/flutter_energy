@@ -6,6 +6,7 @@ import 'package:flutter_energy/shared/widgets/energy_card.dart';
 import '../../../shared/widgets/device_control_card.dart';
 import '../../../shared/widgets/quick_actions.dart';
 import '../../../shared/widgets/usage_chart.dart';
+import '../../home/views/add_appliance_view.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
@@ -112,7 +113,9 @@ class DashboardView extends StatelessWidget {
         );
       }),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.toNamed('/add-device'),
+        onPressed: () => Get.to(
+              () => const AddApplianceView(),
+        ),
         child: const Icon(Icons.add),
       ),
     );
@@ -181,7 +184,9 @@ class DashboardView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () => Get.toNamed('/add-device'),
+            onPressed: () => Get.to(
+              () => const AddApplianceView(),
+            ),
             icon: const Icon(Icons.add),
             label: const Text('Add Device'),
           ),
