@@ -263,6 +263,9 @@ class DeviceControlCard extends StatelessWidget {
               // Delete the device
               homeController.deleteAppliance(reading.applianceInfo);
 
+              homeController.fetchRooms();
+              homeController.fetchDevices();
+              homeController.fetchHomeData();
               Get.back();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
