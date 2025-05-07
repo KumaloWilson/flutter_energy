@@ -176,7 +176,7 @@ class ApiService {
       if (ratedPower != null) data['Rated_Power'] = ratedPower;
       if (relayStatus != null) data['Relay_Status'] = relayStatus;
 
-      final response = await _dio.put(
+      final response = await _dio.patch(
         'update-devices/$meterNumber/',
         data: data,
       );
