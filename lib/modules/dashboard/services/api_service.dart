@@ -148,7 +148,7 @@ class ApiService {
   // Delete a device
   Future<bool> deleteDevice(String meterNumber) async {
     try {
-      final response = await _dio.delete('devices/$meterNumber/');
+      final response = await _dio.delete('delete-devices/$meterNumber/');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         return true;
@@ -176,7 +176,7 @@ class ApiService {
       if (ratedPower != null) data['Rated_Power'] = ratedPower;
       if (relayStatus != null) data['Relay_Status'] = relayStatus;
 
-      final response = await _dio.put(
+      final response = await _dio.patch(
         'update-devices/$meterNumber/',
         data: data,
       );

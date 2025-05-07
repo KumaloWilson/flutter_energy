@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_energy/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
@@ -247,6 +248,7 @@ class DeviceControlCard extends StatelessWidget {
 
   void _confirmDelete(BuildContext context) {
     final HomeController homeController = Get.find<HomeController>();
+    final DashboardController dashboardController  = Get.find<DashboardController>();
 
     showDialog(
       context: context,
@@ -263,6 +265,10 @@ class DeviceControlCard extends StatelessWidget {
               // Delete the device
               homeController.deleteAppliance(reading.applianceInfo);
 
+              homeController.fetchRooms();
+              homeController.fetchDevices();
+              homeController.fetchHomeData();
+              dashboardController.refreshDashboard();
               Get.back();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),

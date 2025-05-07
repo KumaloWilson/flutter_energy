@@ -318,6 +318,10 @@ class ApplianceCard extends StatelessWidget {
                 newRatedPower: '${powerController.text.trim()} W',
               );
 
+              homeController.fetchDevices();
+              homeController.fetchHomeData();
+              homeController.fetchRooms();
+
               Get.back();
             },
             child: const Text('Save'),
