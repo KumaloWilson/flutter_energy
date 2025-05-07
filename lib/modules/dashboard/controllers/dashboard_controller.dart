@@ -43,6 +43,9 @@ class DashboardController extends GetxController {
   // Historical readings for chart
   final RxMap<int, List<ApplianceReading>> deviceHistoricalReadings = <int, List<ApplianceReading>>{}.obs;
 
+  // Track the currently viewed device ID for charts
+  final Rx<int?> currentViewedDeviceId = Rx<int?>(null);
+
   // Timer for auto-refresh
   Timer? _refreshTimer;
   Timer? _usageDataTimer;
@@ -120,12 +123,18 @@ class DashboardController extends GetxController {
     }
   }
 
-  Future<void> fetchUsageData() async {
+  Future<void> fetchUsageData({int? deviceId}) async {
     try {
       isLoadingUsageData.value = true;
 
-      // Get usage data based on selected time range
-      final data = await _fetchUsageDataForTimeRange(selectedTimeRange.value);
+      // Store the current device ID being viewed
+      currentViewedDeviceId.value = deviceId;
+
+      // Get usage data based on selected time range and device ID
+      final data = await _fetchUsageDataForTimeRange(
+          selectedTimeRange.value,
+          deviceId
+      );
 
       // Update the chart data
       usageData.value = data.values;
@@ -154,7 +163,9 @@ class DashboardController extends GetxController {
     }
   }
 
-  Future<UsageChartData> _fetchUsageDataForTimeRange(String timeRange) async {
+
+
+  Future<UsageChartData> _fetchUsageDataForTimeRange(String timeRange, int? deviceId) async {
     final now = DateTime.now();
     late DateTime startDate;
     late List<String> labels;
@@ -195,8 +206,10 @@ class DashboardController extends GetxController {
     final formattedStartDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(startDate);
     final formattedEndDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
 
-    // Get device IDs
-    final deviceIds = devices.map((device) => device.id).toList();
+    // Get device IDs - if deviceId is provided, use only that one
+    final deviceIds = deviceId != null
+        ? [deviceId]
+        : devices.map((device) => device.id).toList();
 
     try {
       // Fetch historical data for each device if needed
@@ -210,7 +223,7 @@ class DashboardController extends GetxController {
       );
 
       // Process the data based on time range
-      final values = _processUsageData(timeRange, labels.length, consumptionData);
+      final values = _processUsageData(timeRange, labels.length, consumptionData, deviceId);
 
       return UsageChartData(values: values, labels: labels);
     } catch (e) {
@@ -241,80 +254,230 @@ class DashboardController extends GetxController {
     }
   }
 
-  List<double> _processUsageData(String timeRange, int expectedLength, Map<int, double> consumptionData) {
+  List<double> _processUsageData(
+      String timeRange,
+      int expectedLength,
+      Map<int, double> consumptionData,
+      int? deviceId
+      ) {
     // Initialize with zeros
     final result = List<double>.filled(expectedLength, 0.0);
 
-    // If we have consumption data from the API, use it directly
-    if (consumptionData.isNotEmpty) {
+    // If filtering for a specific device
+    if (deviceId != null) {
+      // Use only the consumption for this specific device
+      final deviceConsumption = consumptionData[deviceId] ?? 0.0;
+
+      if (deviceConsumption > 0) {
+        // Create a distribution pattern for this specific device
+        _distributeConsumption(result, timeRange, deviceConsumption);
+      } else {
+        // Try to use historical readings for this device if available
+        if (deviceHistoricalReadings.containsKey(deviceId)) {
+          _processHistoricalReadingsForDevice(result, timeRange, deviceId);
+        }
+      }
+    }
+    // For all devices
+    else if (consumptionData.isNotEmpty) {
       // Sum up consumption for all devices
       double totalConsumption = consumptionData.values.fold(0.0, (sum, value) => sum + value);
 
-      // For simplicity, distribute evenly across the time range
-      // This is a fallback when we don't have detailed time-series data
       if (totalConsumption > 0) {
-        // Create a simple distribution pattern (higher in middle of day, lower at night)
-        switch (timeRange) {
-          case 'Today':
-          // Hourly pattern for today
-            for (int i = 0; i < result.length; i++) {
-              // Higher usage during day hours (8am-8pm)
-              if (i >= 8 && i <= 20) {
-                result[i] = totalConsumption * 0.06 * (1 + 0.5 * _getRandomVariation());
-              } else {
-                result[i] = totalConsumption * 0.02 * (1 + 0.3 * _getRandomVariation());
-              }
-            }
-            break;
-          case 'Week':
-          // Daily pattern for week (weekdays higher than weekend)
-            for (int i = 0; i < result.length; i++) {
-              // Weekdays (0-4) have higher usage than weekend (5-6)
-              if (i < 5) {
-                result[i] = totalConsumption * 0.17 * (1 + 0.2 * _getRandomVariation());
-              } else {
-                result[i] = totalConsumption * 0.13 * (1 + 0.2 * _getRandomVariation());
-              }
-            }
-            break;
-          case 'Month':
-          // Distribute across days of month
-            final daysInMonth = result.length;
-            for (int i = 0; i < daysInMonth; i++) {
-              result[i] = totalConsumption / daysInMonth * (1 + 0.3 * _getRandomVariation());
-            }
-            break;
-          case 'Year':
-          // Monthly pattern (higher in summer/winter months)
-            for (int i = 0; i < 12; i++) {
-              // Higher in summer (5-7) and winter (0-1, 11)
-              if (i >= 5 && i <= 7 || i <= 1 || i == 11) {
-                result[i] = totalConsumption * 0.1 * (1 + 0.2 * _getRandomVariation());
-              } else {
-                result[i] = totalConsumption * 0.07 * (1 + 0.2 * _getRandomVariation());
-              }
-            }
-            break;
-        }
-      }
-
-      // Ensure the sum matches the total consumption (adjust for rounding errors)
-      final currentSum = result.fold(0.0, (sum, value) => sum + value);
-      if (currentSum > 0) {
-        final adjustmentFactor = totalConsumption / currentSum;
-        for (int i = 0; i < result.length; i++) {
-          result[i] *= adjustmentFactor;
-        }
-      }
-    } else {
-      // Use historical readings if available
-      if (deviceHistoricalReadings.isNotEmpty) {
-        // Process historical readings based on time range
+        // Distribute the consumption based on time range
+        _distributeConsumption(result, timeRange, totalConsumption);
+      } else if (deviceHistoricalReadings.isNotEmpty) {
+        // Use historical readings for all devices
         _processHistoricalReadings(result, timeRange);
       }
+    } else if (deviceHistoricalReadings.isNotEmpty) {
+      // If we didn't get consumption data, try historical readings
+      _processHistoricalReadings(result, timeRange);
     }
 
     return result;
+  }
+
+  // Helper method to distribute consumption values based on time patterns
+  void _distributeConsumption(List<double> result, String timeRange, double totalConsumption) {
+    switch (timeRange) {
+      case 'Today':
+      // Hourly pattern for today
+        for (int i = 0; i < result.length; i++) {
+          // Higher usage during day hours (8am-8pm)
+          if (i >= 8 && i <= 20) {
+            result[i] = totalConsumption * 0.06 * (1 + 0.5 * _getRandomVariation());
+          } else {
+            result[i] = totalConsumption * 0.02 * (1 + 0.3 * _getRandomVariation());
+          }
+        }
+        break;
+      case 'Week':
+      // Daily pattern for week (weekdays higher than weekend)
+        for (int i = 0; i < result.length; i++) {
+          // Weekdays (0-4) have higher usage than weekend (5-6)
+          if (i < 5) {
+            result[i] = totalConsumption * 0.17 * (1 + 0.2 * _getRandomVariation());
+          } else {
+            result[i] = totalConsumption * 0.13 * (1 + 0.2 * _getRandomVariation());
+          }
+        }
+        break;
+      case 'Month':
+      // Distribute across days of month
+        final daysInMonth = result.length;
+        for (int i = 0; i < daysInMonth; i++) {
+          result[i] = totalConsumption / daysInMonth * (1 + 0.3 * _getRandomVariation());
+        }
+        break;
+      case 'Year':
+      // Monthly pattern (higher in summer/winter months)
+        for (int i = 0; i < 12; i++) {
+          // Higher in summer (5-7) and winter (0-1, 11)
+          if (i >= 5 && i <= 7 || i <= 1 || i == 11) {
+            result[i] = totalConsumption * 0.1 * (1 + 0.2 * _getRandomVariation());
+          } else {
+            result[i] = totalConsumption * 0.07 * (1 + 0.2 * _getRandomVariation());
+          }
+        }
+        break;
+    }
+
+    // Ensure the sum matches the total consumption (adjust for rounding errors)
+    final currentSum = result.fold(0.0, (sum, value) => sum + value);
+    if (currentSum > 0) {
+      final adjustmentFactor = totalConsumption / currentSum;
+      for (int i = 0; i < result.length; i++) {
+        result[i] *= adjustmentFactor;
+      }
+    }
+  }
+
+  // Helper method to process historical readings for a specific device
+  void _processHistoricalReadingsForDevice(List<double> result, String timeRange, int deviceId) {
+    final deviceReadings = deviceHistoricalReadings[deviceId];
+    if (deviceReadings == null || deviceReadings.isEmpty) return;
+
+    // Sort by timestamp
+    deviceReadings.sort((a, b) => a.readingTimeStamp.compareTo(b.readingTimeStamp));
+
+    final now = DateTime.now();
+
+    switch (timeRange) {
+      case 'Today':
+        final todayStart = DateTime(now.year, now.month, now.day);
+
+        // Group readings by hour
+        final hourlyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in deviceReadings) {
+          if (reading.readingTimeStamp.isAfter(todayStart)) {
+            final hour = reading.readingTimeStamp.hour;
+            hourlyReadings.putIfAbsent(hour, () => []).add(reading);
+          }
+        }
+
+        // Calculate energy for each hour
+        for (int hour = 0; hour < 24; hour++) {
+          if (hourlyReadings.containsKey(hour)) {
+            final readings = hourlyReadings[hour]!;
+            double hourlyEnergy = 0;
+
+            for (final reading in readings) {
+              hourlyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[hour] = hourlyEnergy;
+          }
+        }
+        break;
+
+      case 'Week':
+        final weekStart = now.subtract(Duration(days: 6));
+        final startOfWeek = DateTime(weekStart.year, weekStart.month, weekStart.day);
+
+        // Group readings by day
+        final dailyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in deviceReadings) {
+          if (reading.readingTimeStamp.isAfter(startOfWeek)) {
+            final dayDiff = reading.readingTimeStamp.difference(startOfWeek).inDays;
+            if (dayDiff >= 0 && dayDiff < 7) {
+              dailyReadings.putIfAbsent(dayDiff, () => []).add(reading);
+            }
+          }
+        }
+
+        // Calculate energy for each day
+        for (int day = 0; day < 7; day++) {
+          if (dailyReadings.containsKey(day)) {
+            final readings = dailyReadings[day]!;
+            double dailyEnergy = 0;
+
+            for (final reading in readings) {
+              dailyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[day] = dailyEnergy;
+          }
+        }
+        break;
+
+      case 'Month':
+        final monthStart = DateTime(now.year, now.month, 1);
+        final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+
+        // Group readings by day of month
+        final monthlyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in deviceReadings) {
+          if (reading.readingTimeStamp.isAfter(monthStart)) {
+            final day = reading.readingTimeStamp.day - 1; // 0-based index
+            if (day >= 0 && day < daysInMonth) {
+              monthlyReadings.putIfAbsent(day, () => []).add(reading);
+            }
+          }
+        }
+
+        // Calculate energy for each day
+        for (int day = 0; day < daysInMonth; day++) {
+          if (monthlyReadings.containsKey(day)) {
+            final readings = monthlyReadings[day]!;
+            double dailyEnergy = 0;
+
+            for (final reading in readings) {
+              dailyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[day] = dailyEnergy;
+          }
+        }
+        break;
+
+      case 'Year':
+        final yearStart = DateTime(now.year, 1, 1);
+
+        // Group readings by month
+        final yearlyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in deviceReadings) {
+          if (reading.readingTimeStamp.isAfter(yearStart)) {
+            final month = reading.readingTimeStamp.month - 1; // 0-based index
+            yearlyReadings.putIfAbsent(month, () => []).add(reading);
+          }
+        }
+
+        // Calculate energy for each month
+        for (int month = 0; month < 12; month++) {
+          if (yearlyReadings.containsKey(month)) {
+            final readings = yearlyReadings[month]!;
+            double monthlyEnergy = 0;
+
+            for (final reading in readings) {
+              monthlyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[month] = monthlyEnergy;
+          }
+        }
+        break;
+    }
   }
 
   void _processHistoricalReadings(List<double> result, String timeRange) {
@@ -454,12 +617,159 @@ class DashboardController extends GetxController {
     return (DateTime.now().microsecondsSinceEpoch % 100) / 50 - 1;
   }
 
-  void updateTimeRange(String newRange) {
+  // Update time range and refetch data with the current device ID
+  void updateTimeRange(String newRange, {int? deviceId}) {
     if (selectedTimeRange.value != newRange) {
       selectedTimeRange.value = newRange;
-      fetchUsageData();
+      // Use the passed deviceId or the currently stored one
+      fetchUsageData(deviceId: deviceId ?? currentViewedDeviceId.value);
     }
   }
+
+
+  void _processHistoricalReadingssy(List<double> result, String timeRange) {
+    // Combine all device readings
+    final allReadings = <ApplianceReading>[];
+    for (final readings in deviceHistoricalReadings.values) {
+      allReadings.addAll(readings);
+    }
+
+    // Sort by timestamp
+    allReadings.sort((a, b) => a.readingTimeStamp.compareTo(b.readingTimeStamp));
+
+    if (allReadings.isEmpty) return;
+
+    final now = DateTime.now();
+
+    switch (timeRange) {
+      case 'Today':
+        final todayStart = DateTime(now.year, now.month, now.day);
+
+        // Group readings by hour
+        final hourlyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in allReadings) {
+          if (reading.readingTimeStamp.isAfter(todayStart)) {
+            final hour = reading.readingTimeStamp.hour;
+            hourlyReadings.putIfAbsent(hour, () => []).add(reading);
+          }
+        }
+
+        // Calculate energy for each hour
+        for (int hour = 0; hour < 24; hour++) {
+          if (hourlyReadings.containsKey(hour)) {
+            final readings = hourlyReadings[hour]!;
+            double hourlyEnergy = 0;
+
+            for (final reading in readings) {
+              hourlyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[hour] = hourlyEnergy;
+          }
+        }
+        break;
+
+      case 'Week':
+        final weekStart = now.subtract(Duration(days: 6));
+        final startOfWeek = DateTime(weekStart.year, weekStart.month, weekStart.day);
+
+        // Group readings by day
+        final dailyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in allReadings) {
+          if (reading.readingTimeStamp.isAfter(startOfWeek)) {
+            final dayDiff = reading.readingTimeStamp.difference(startOfWeek).inDays;
+            if (dayDiff >= 0 && dayDiff < 7) {
+              dailyReadings.putIfAbsent(dayDiff, () => []).add(reading);
+            }
+          }
+        }
+
+        // Calculate energy for each day
+        for (int day = 0; day < 7; day++) {
+          if (dailyReadings.containsKey(day)) {
+            final readings = dailyReadings[day]!;
+            double dailyEnergy = 0;
+
+            for (final reading in readings) {
+              dailyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[day] = dailyEnergy;
+          }
+        }
+        break;
+
+      case 'Month':
+        final monthStart = DateTime(now.year, now.month, 1);
+        final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+
+        // Group readings by day of month
+        final monthlyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in allReadings) {
+          if (reading.readingTimeStamp.isAfter(monthStart)) {
+            final day = reading.readingTimeStamp.day - 1; // 0-based index
+            if (day >= 0 && day < daysInMonth) {
+              monthlyReadings.putIfAbsent(day, () => []).add(reading);
+            }
+          }
+        }
+
+        // Calculate energy for each day
+        for (int day = 0; day < daysInMonth; day++) {
+          if (monthlyReadings.containsKey(day)) {
+            final readings = monthlyReadings[day]!;
+            double dailyEnergy = 0;
+
+            for (final reading in readings) {
+              dailyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[day] = dailyEnergy;
+          }
+        }
+        break;
+
+      case 'Year':
+        final yearStart = DateTime(now.year, 1, 1);
+
+        // Group readings by month
+        final yearlyReadings = <int, List<ApplianceReading>>{};
+        for (final reading in allReadings) {
+          if (reading.readingTimeStamp.isAfter(yearStart)) {
+            final month = reading.readingTimeStamp.month - 1; // 0-based index
+            yearlyReadings.putIfAbsent(month, () => []).add(reading);
+          }
+        }
+
+        // Calculate energy for each month
+        for (int month = 0; month < 12; month++) {
+          if (yearlyReadings.containsKey(month)) {
+            final readings = yearlyReadings[month]!;
+            double monthlyEnergy = 0;
+
+            for (final reading in readings) {
+              monthlyEnergy += double.parse(reading.activeEnergy);
+            }
+
+            result[month] = monthlyEnergy;
+          }
+        }
+        break;
+    }
+  }
+
+  // Helper method to add some randomness to the data distribution
+  // double _getRandomVariation() {
+  //   // Simple pseudo-random variation between -1 and 1
+  //   return (DateTime.now().microsecondsSinceEpoch % 100) / 50 - 1;
+  // }
+  //
+  // void updateTimeRange(String newRange) {
+  //   if (selectedTimeRange.value != newRange) {
+  //     selectedTimeRange.value = newRange;
+  //     fetchUsageData();
+  //   }
+  // }
 
   Future<void> _updateFirestoreDeviceData() async {
     try {

@@ -144,6 +144,55 @@ class ApiService {
     }
   }
 
+
+  // Delete a device
+  Future<bool> deleteDevice(String meterNumber) async {
+    try {
+      final response = await _dio.delete('devices/$meterNumber/');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else {
+        throw Exception('Failed to delete device: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to delete device');
+    } catch (e) {
+      throw Exception('Unexpected error while deleting device: $e');
+    }
+  }
+
+  // Update device attributes
+  Future<bool> updateDevice({
+    required String meterNumber,
+    String? deviceName,
+    String? ratedPower,
+    String? relayStatus,
+  }) async {
+    try {
+      final Map<String, dynamic> data = {};
+
+      if (deviceName != null) data['Device'] = deviceName;
+      if (ratedPower != null) data['Rated_Power'] = ratedPower;
+      if (relayStatus != null) data['Relay_Status'] = relayStatus;
+
+      final response = await _dio.put(
+        'update-devices/$meterNumber/',
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Failed to update device: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to update device');
+    } catch (e) {
+      throw Exception('Unexpected error while updating device: $e');
+    }
+  }
+
   // Add a new device
   Future<bool> addDevice({
     required String name,

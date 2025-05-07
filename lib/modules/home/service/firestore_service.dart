@@ -223,4 +223,39 @@ class FirestoreService {
       return null;
     }
   }
+
+  Future<void> updateDeviceName({
+    required String homeId,
+    required String deviceId,
+    required String newName,
+  }) async {
+    try {
+      await _firestore
+          .collection('homes')
+          .doc(homeId)
+          .collection('device_mappings')
+          .doc(deviceId)
+          .update({'deviceName': newName});
+    } catch (e) {
+      DevLogs.logError('Error updating device name: $e');
+      throw Exception('Failed to update device name');
+    }
+  }
+
+  Future<void> removeDeviceFromRoom({
+    required String homeId,
+    required String deviceId,
+  }) async {
+    try {
+      await _firestore
+          .collection('homes')
+          .doc(homeId)
+          .collection('device_mappings')
+          .doc(deviceId)
+          .delete();
+    } catch (e) {
+      DevLogs.logError('Error removing device from room: $e');
+      throw Exception('Failed to remove device from room');
+    }
+  }
 }

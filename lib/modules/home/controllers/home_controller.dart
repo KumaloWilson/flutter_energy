@@ -6,6 +6,7 @@ import 'package:flutter_energy/modules/home/models/room_model.dart';
 import 'package:flutter_energy/modules/home/models/home_model.dart';
 import 'package:flutter_energy/modules/dashboard/models/appliance_reading.dart';
 import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
+import 'package:flutter_energy/modules/home/models/appliance_model.dart';
 
 import '../service/firestore_service.dart';
 
@@ -27,6 +28,9 @@ class HomeController extends GetxController {
 
   // For device control
   final RxMap<int, bool> deviceControlLoading = <int, bool>{}.obs;
+
+  // For device deletion and update
+  final RxMap<int, bool> deviceActionLoading = <int, bool>{}.obs;
 
   // Add a flag to track if auth is initialized
   final RxBool isAuthInitialized = false.obs;
@@ -330,6 +334,159 @@ class HomeController extends GetxController {
     }
   }
 
+  Future<bool> deleteAppliance(ApplianceInfo device) async {
+    try {
+      deviceActionLoading[device.id] = true;
+
+      if (device.meterNumber.isEmpty) {
+        throw Exception('Device has no meter number');
+      }
+
+      // Delete from API
+      final success = await _apiService.deleteDevice(device.meterNumber);
+
+      if (success) {
+        // Remove from Firestore
+        if (currentHome.value != null) {
+          await _firestoreService.removeDeviceFromRoom(
+            homeId: currentHome.value!.id,
+            deviceId: device.id.toString(),
+          );
+        }
+
+        // Remove from local lists
+        allDevices.removeWhere((d) => d.id == device.id);
+
+        // Remove from room devices
+        for (final roomId in devicesByRoom.keys) {
+          devicesByRoom[roomId]!.removeWhere((d) => d.id == device.id);
+        }
+
+        // Refresh UI
+        devicesByRoom.refresh();
+
+        Get.snackbar(
+          'Success',
+          'Device deleted successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+
+        return true;
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to delete device',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    } catch (e) {
+      DevLogs.logError('Failed to delete device: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to delete device: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      deviceActionLoading.remove(device.id);
+    }
+  }
+
+  Future<bool> updateAppliance(ApplianceInfo device, {String? newName, String? newRatedPower}) async {
+    try {
+      deviceActionLoading[device.id] = true;
+
+      if (device.meterNumber.isEmpty) {
+        throw Exception('Device has no meter number');
+      }
+
+      // Update in API
+      final success = await _apiService.updateDevice(
+        meterNumber: device.meterNumber,
+        deviceName: newName,
+        ratedPower: newRatedPower,
+      );
+
+      if (success) {
+        // Update in local lists
+        final updatedDevice = ApplianceInfo(
+          id: device.id,
+          appliance: newName ?? device.appliance,
+          ratedPower: newRatedPower ?? device.ratedPower,
+          dateAdded: device.dateAdded,
+          meterNumber: device.meterNumber,
+          relayStatus: device.relayStatus,
+        );
+
+        // Update in all devices
+        final index = allDevices.indexWhere((d) => d.id == device.id);
+        if (index >= 0) {
+          allDevices[index] = updatedDevice;
+        }
+
+        // Update in room devices
+        for (final roomId in devicesByRoom.keys) {
+          final roomDevices = devicesByRoom[roomId]!;
+          final deviceIndex = roomDevices.indexWhere((d) => d.id == device.id);
+
+          if (deviceIndex >= 0) {
+            roomDevices[deviceIndex] = updatedDevice;
+          }
+        }
+
+        // Update in Firestore if name changed
+        if (newName != null && currentHome.value != null) {
+          await _firestoreService.updateDeviceName(
+            homeId: currentHome.value!.id,
+            deviceId: device.id.toString(),
+            newName: newName,
+          );
+        }
+
+        // Refresh UI
+        devicesByRoom.refresh();
+
+        Get.snackbar(
+          'Success',
+          'Device updated successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+
+        return true;
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to update device',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    } catch (e) {
+      DevLogs.logError('Failed to update device: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to update device: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      deviceActionLoading.remove(device.id);
+    }
+  }
+
   Future<bool> assignDeviceToRoom(int deviceId, String roomId) async {
     try {
       isLoading.value = true;
@@ -475,6 +632,11 @@ class HomeController extends GetxController {
   // Check if a device is currently being controlled
   bool isDeviceControlLoading(int deviceId) {
     return deviceControlLoading[deviceId] ?? false;
+  }
+
+  // Check if a device is currently being edited or deleted
+  bool isDeviceActionLoading(int deviceId) {
+    return deviceActionLoading[deviceId] ?? false;
   }
 
   // Add this method to get the list of rooms for dropdown selection

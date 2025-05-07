@@ -1,30 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_energy/shared/widgets/usage_chart.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import '../../scheduling/views/device_schedule_view.dart';
 import '../controllers/device_details_controller.dart';
 import '../widgets/analytics_widgets.dart';
 import '../../../core/theme/app_colors.dart';
 
-class DeviceDetailsView extends StatelessWidget {
+class DeviceDetailsView extends StatefulWidget {
   final int deviceId;
   final String deviceName;
 
   const DeviceDetailsView({
-    Key? key,
+    super.key,
     required this.deviceId,
     required this.deviceName,
-  }) : super(key: key);
+  });
 
   @override
+  State<DeviceDetailsView> createState() => _DeviceDetailsViewState();
+}
+
+class _DeviceDetailsViewState extends State<DeviceDetailsView> {
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(DeviceDetailsController(deviceId));
+    final controller = Get.put(DeviceDetailsController(widget.deviceId));
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('$deviceName Analytics'),
+        title: Text('${widget.deviceName} Analytics'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.schedule),
+            tooltip: 'Manage Schedules',
+            onPressed: () {
+              Get.to(() => DeviceSchedulesView(device: controller.deviceInfo.value!));
+            },
+          ),
+
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => controller.fetchAllData(),
@@ -80,10 +96,6 @@ class DeviceDetailsView extends StatelessWidget {
               // Real-time Metrics Card
               _buildRealTimeMetricsCard(controller, context),
 
-              const SizedBox(height: 24),
-
-              // Date Range Selector
-              _buildDateRangeSelector(controller, context),
 
               const SizedBox(height: 16),
 
@@ -97,8 +109,8 @@ class DeviceDetailsView extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Historical Usage Card
-              _buildHistoricalUsageCard(controller, context),
+
+              UsageChart(deviceId: widget.deviceId,).animate().fadeIn(delay: 400.ms),
 
               const SizedBox(height: 24),
 
@@ -155,7 +167,7 @@ class DeviceDetailsView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      _getDeviceIcon(deviceName),
+                      _getDeviceIcon(widget.deviceName),
                       color: Colors.white,
                       size: 28,
                     ),
@@ -166,7 +178,7 @@ class DeviceDetailsView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          deviceName,
+                          widget.deviceName,
                           style: theme.textTheme.titleLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -231,7 +243,7 @@ class DeviceDetailsView extends StatelessWidget {
                   ElevatedButton.icon(
                     onPressed: () {
                       // Navigate to comparison view
-                      Get.toNamed('/comparison', arguments: {'deviceId': deviceId});
+                      Get.toNamed('/comparison', arguments: {'deviceId': widget.deviceId});
                     },
                     icon: const Icon(Icons.compare_arrows, color: Colors.teal),
                     label: const Text('Compare'),
@@ -405,112 +417,6 @@ class DeviceDetailsView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDateRangeSelector(DeviceDetailsController controller, BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Select Date Range',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: controller.startDate.value,
-                        firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                        lastDate: controller.endDate.value,
-                      );
-                      if (picked != null) {
-                        controller.setStartDate(picked);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Obx(() => Text(
-                            DateFormat('MMM d, yyyy').format(controller.startDate.value),
-                            style: theme.textTheme.bodyMedium,
-                          )),
-                          const Icon(Icons.calendar_today, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text('to'),
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: controller.endDate.value,
-                        firstDate: controller.startDate.value,
-                        lastDate: DateTime.now().add(const Duration(days: 7)),
-                      );
-                      if (picked != null) {
-                        controller.setEndDate(picked);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Obx(() => Text(
-                            DateFormat('MMM d, yyyy').format(controller.endDate.value),
-                            style: theme.textTheme.bodyMedium,
-                          )),
-                          const Icon(Icons.calendar_today, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => controller.fetchDeviceSummary(),
-                child: const Text('Apply Date Range'),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -748,110 +654,6 @@ class DeviceDetailsView extends StatelessWidget {
                     ),
                   ),
                 ],
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHistoricalUsageCard(DeviceDetailsController controller, BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Historical Usage',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Obx(() {
-                  if (controller.isLoadingHistorical.value) {
-                    return const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    );
-                  }
-                  return const Icon(Icons.history, color: Colors.indigo);
-                }),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Recent energy consumption records',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Obx(() {
-              if (controller.historicalReadings.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text('No historical data available'),
-                  ),
-                );
-              }
-
-              // Take the 5 most recent readings
-              final recentReadings = controller.historicalReadings.take(5).toList();
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: recentReadings.length,
-                itemBuilder: (context, index) {
-                  final reading = recentReadings[index];
-                  final energy = double.parse(reading.activeEnergy);
-                  final date = DateFormat('MMM d, yyyy h:mm a').format(reading.readingTimeStamp);
-
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.power,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    title: Text(
-                      '${energy.toStringAsFixed(4)} kWh',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      date,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    trailing: Text(
-                      '\$${(energy * controller.energyRate.value).toStringAsFixed(2)}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  );
-                },
               );
             }),
           ],
@@ -1537,6 +1339,7 @@ class DeviceDetailsView extends StatelessWidget {
       ],
     );
   }
+
 
   IconData _getDeviceIcon(String deviceName) {
     final name = deviceName.toLowerCase();

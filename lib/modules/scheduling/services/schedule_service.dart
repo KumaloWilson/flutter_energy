@@ -1,16 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_energy/core/utilities/logger.dart';
 import 'package:flutter_energy/modules/dashboard/services/api_service.dart';
 import 'package:flutter_energy/modules/scheduling/models/schedule_model.dart';
 import 'package:get/get.dart';
-import 'package:workmanager/workmanager.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:isolate';
+import 'dart:ui';
+
+import '../../../bindings/bindings.dart';
 
 class ScheduleService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ApiService _apiService = Get.find<ApiService>();
+
+  // Alarm IDs
+  static const int periodicScheduleCheckId = 1;
+  static const int initialScheduleCheckId = 2;
 
   // Collection reference for schedules
   CollectionReference<Map<String, dynamic>> get _schedulesCollection {
@@ -21,29 +31,28 @@ class ScheduleService extends GetxService {
     return _firestore.collection('users').doc(userId).collection('schedules');
   }
 
-  // Initialize workmanager for background tasks
+  // Initialize alarm manager for background tasks
   Future<void> initBackgroundTasks() async {
-    await Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: true,
-    );
+    // Initialize the alarm manager plugin
+    await AndroidAlarmManager.initialize();
 
-    // Register periodic task to check schedules
-    await Workmanager().registerPeriodicTask(
-      'com.energy.scheduleCheck',
-      'scheduleCheck',
-      frequency: const Duration(minutes: 15),
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-      ),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+    // Register periodic task to check schedules (15 minutes)
+    await AndroidAlarmManager.periodic(
+      const Duration(minutes: 15),
+      periodicScheduleCheckId,
+      scheduleCheckCallback,
+      exact: true,
+      wakeup: true,
+      rescheduleOnReboot: true,
     );
 
     // Register one-time task to check schedules immediately
-    await Workmanager().registerOneOffTask(
-      'com.energy.initialScheduleCheck',
-      'scheduleCheck',
-      initialDelay: const Duration(seconds: 10),
+    await AndroidAlarmManager.oneShot(
+      const Duration(seconds: 10),
+      initialScheduleCheckId,
+      scheduleCheckCallback,
+      exact: true,
+      wakeup: true,
     );
   }
 
@@ -184,20 +193,32 @@ class ScheduleService extends GetxService {
   }
 }
 
-// This is the callback function that will be called by workmanager
+// This is the callback function that will be called by AndroidAlarmManager
 @pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    try {
-      if (task == 'scheduleCheck') {
-        await Firebase.initializeApp();
+void scheduleCheckCallback() async {
+  // This is needed for plugins that use platform channels
+  WidgetsFlutterBinding.ensureInitialized();
 
-        final scheduleService = ScheduleService();
-        await scheduleService.checkSchedules();
-      }
-      return true;
-    } catch (e) {
-      return false;
-    }
-  });
+
+  try {
+    // Initialize Firebase
+
+    // Initialize Firebase
+    await Firebase.initializeApp();
+
+    // Initialize app dependencies
+    await InitialBinding().dependencies();
+
+    final scheduleService = ScheduleService();
+    await scheduleService.checkSchedules();
+
+    // Save the last execution time in shared preferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('lastScheduleCheck', DateTime.now().toIso8601String());
+
+    // For debugging purposes
+    DevLogs.logInfo('Schedule check completed at ${DateTime.now()}');
+  } catch (e) {
+    DevLogs.logError('Error in schedule check callback: $e');
+  }
 }
