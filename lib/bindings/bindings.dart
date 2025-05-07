@@ -14,6 +14,8 @@ import '../modules/dashboard/services/api_service.dart';
 import '../modules/home/controllers/home_controller.dart';
 import '../modules/home/service/firestore_service.dart';
 import '../modules/main/controller/main_controller.dart';
+import '../modules/scheduling/controllers/schedule_controller.dart';
+import '../modules/scheduling/services/schedule_service.dart';
 import '../modules/settings/controller/settings_controller.dart';
 import '../modules/tips/controller/tips_controller.dart';
 
@@ -25,12 +27,14 @@ class InitialBinding implements Bindings {
       Get.put(ApiService(), permanent: true);
       Get.put(FirestoreService(), permanent: true);
       Get.put(AnalyticsService(), permanent: true);
+      Get.put(ScheduleService(), permanent: true);
 
       // Core controllers
       Get.put(AuthController(), permanent: true);
       Get.put(MainController(), permanent: true);
       Get.put(SettingsController(), permanent: true);
       Get.put(HomeController(), permanent: true);
+      Get.put(ScheduleController(), permanent: true);
 
       // Feature controllers
       Get.lazyPut(() => DashboardController());

@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import '../../scheduling/views/device_schedule_view.dart';
 import '../controller/appliance_controller.dart';
 import '../service/appliance_service.dart';
+
 
 class ApplianceDetailView extends StatelessWidget {
   const ApplianceDetailView({super.key});
@@ -21,13 +23,24 @@ class ApplianceDetailView extends StatelessWidget {
           : CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
+          // Find the SliverAppBar in the build method and update it to include actions:
+
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
             elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.schedule),
+                tooltip: 'Manage Schedules',
+                onPressed: () {
+                  Get.to(() => DeviceSchedulesView(device: controller.appliance.value.applianceInfo));
+                },
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                controller.appliance.value.id.toString(),
+                controller.appliance.value.applianceInfo.appliance,
                 style: TextStyle(
                   color: colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
@@ -60,7 +73,7 @@ class ApplianceDetailView extends StatelessWidget {
                         tag: 'appliance-${controller.appliance.value.id}',
                         child: Icon(
                           _getApplianceIcon(
-                            controller.appliance.value.id.toString(),
+                            controller.appliance.value.applianceInfo.appliance,
                           ),
                           size: 80,
                           color: colorScheme.onPrimary,
@@ -129,7 +142,7 @@ class ApplianceDetailView extends StatelessWidget {
                   child: _buildOverviewItem(
                     context,
                     'Rated Power',
-                    controller.appliance.value.id.toString(),
+                    controller.appliance.value.applianceInfo.ratedPower,
                     Icons.power,
                     colorScheme.primary,
                   ),
@@ -704,15 +717,27 @@ class ApplianceDetailView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  Icons.schedule,
-                  color: Theme.of(context).colorScheme.primary,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Schedule & Settings',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Schedule & Settings',
-                  style: Theme.of(context).textTheme.titleLarge,
+                TextButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Schedule'),
+                  onPressed: () {
+                    Get.to(() => DeviceSchedulesView(device: controller.appliance.value.applianceInfo));
+                  },
                 ),
               ],
             ),
@@ -745,6 +770,16 @@ class ApplianceDetailView extends StatelessWidget {
                 },
                 activeColor: Theme.of(context).colorScheme.primary,
               )),
+            ),
+            const Divider(),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('View All Schedules'),
+              subtitle: const Text('Manage all schedules for this device'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Get.to(() => DeviceSchedulesView(device: controller.appliance.value.applianceInfo));
+              },
             ),
           ],
         ),

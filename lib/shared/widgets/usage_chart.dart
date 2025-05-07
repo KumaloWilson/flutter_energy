@@ -5,7 +5,13 @@ import 'package:flutter_energy/modules/dashboard/controllers/dashboard_controlle
 import 'package:intl/intl.dart';
 
 class UsageChart extends StatefulWidget {
-  const UsageChart({super.key});
+  // Add deviceId parameter, which can be null to show all devices
+  final int? deviceId;
+
+  const UsageChart({
+    this.deviceId,
+    super.key
+  });
 
   @override
   State<UsageChart> createState() => _UsageChartState();
@@ -27,7 +33,21 @@ class _UsageChartState extends State<UsageChart> with SingleTickerProviderStateM
       parent: _animationController,
       curve: Curves.easeInOut,
     );
+
+    // Initial fetch with the device ID if provided
+    _controller.fetchUsageData(deviceId: widget.deviceId);
     _animationController.forward();
+  }
+
+  @override
+  void didUpdateWidget(UsageChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // When the deviceId changes, refetch data
+    if (widget.deviceId != oldWidget.deviceId) {
+      _controller.fetchUsageData(deviceId: widget.deviceId);
+      _animationController.reset();
+      _animationController.forward();
+    }
   }
 
   @override
@@ -52,11 +72,22 @@ class _UsageChartState extends State<UsageChart> with SingleTickerProviderStateM
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Title shows if we're viewing a specific device
+              if (widget.deviceId != null)
+                Expanded(
+                  child: Text(
+                    _getDeviceName(widget.deviceId!),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               DropdownButton<String>(
                 value: _controller.selectedTimeRange.value,
                 onChanged: (String? newValue) {
                   if (newValue != null) {
-                    _controller.updateTimeRange(newValue);
+                    _controller.updateTimeRange(newValue, deviceId: widget.deviceId);
                   }
                 },
                 items: ['Today', 'Week', 'Month', 'Year']
@@ -115,6 +146,12 @@ class _UsageChartState extends State<UsageChart> with SingleTickerProviderStateM
         ],
       );
     });
+  }
+
+  // Helper method to get a device name for the title
+  String _getDeviceName(int deviceId) {
+    final device = _controller.devices.firstWhereOrNull((device) => device.id == deviceId);
+    return device?.appliance ?? 'Device $deviceId';
   }
 
   Widget _buildChart(BuildContext context, double animationValue) {
@@ -238,8 +275,11 @@ class _UsageChartState extends State<UsageChart> with SingleTickerProviderStateM
                 final value = barSpot.y;
                 final label = _controller.usageLabels[index];
 
+                // Add device name to tooltip if viewing a specific device
+                final deviceName = widget.deviceId != null ? _getDeviceName(widget.deviceId!) + ': ' : '';
+
                 return LineTooltipItem(
-                  '$label: ${value.toStringAsFixed(2)} kWh',
+                  '$deviceName$label: ${value.toStringAsFixed(2)} kWh',
                   TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
@@ -360,12 +400,14 @@ class _UsageChartState extends State<UsageChart> with SingleTickerProviderStateM
           ),
           const SizedBox(height: 16),
           Text(
-            'No usage data available',
+            widget.deviceId == null
+                ? 'No usage data available'
+                : 'No usage data available for this device',
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 8),
           ElevatedButton.icon(
-            onPressed: _controller.fetchUsageData,
+            onPressed: () => _controller.fetchUsageData(deviceId: widget.deviceId),
             icon: const Icon(Icons.refresh),
             label: const Text('Refresh'),
           ),
